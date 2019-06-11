@@ -1,8 +1,7 @@
 ---
 authors:
 - admin
-bio: My research interests include distributed robotics, mobile computing and programmable
-  matter.
+bio: ""
 education:
   courses:
   - course: PhD Civil & Resource Engineering
@@ -16,14 +15,14 @@ education:
     year: 2011
 email: "dewey@fishandwhistle.net"
 interests:
-- Artificial Intelligence
-- Computational Linguistics
-- Information Retrieval
+- Water Resources Management
+- R, Python, and Web Development
+- R & Python Training
 name: Dewey Dunnington
 organizations:
 - name: Dalhousie University
   url: "http://waterstudies.ca/"
-role: PhD Candidate, Civil & Resource Engineering
+role: Geoscientist, Programmer, Educator
 social:
 - icon: envelope
   icon_pack: fas
