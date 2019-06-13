@@ -1,0 +1,119 @@
+---
+title: New Rmarkdown Content
+author: Dewey Dunnington
+date: '2019-06-12'
+slug: []
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-06-12T17:46:16-03:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+```{r}
+library(tidyverse)
+library(xml2)
+```
+
+```{r}
+wp <- read_xml("fishampwhistle.WordPress.2019-06-12.xml")
+
+items <- wp %>% xml_find_all(".//item")
+
+
+posts <- tibble(
+  post_id = map_dbl(items, . %>% xml_find_first(".//wp:post_id") %>% xml_text() %>% as.numeric()),
+  title = map_chr(items, . %>% xml_find_first(".//title") %>% xml_text(trim = TRUE)),
+  published = map_chr(items, . %>% xml_find_first(".//wp:post_date_gmt") %>% xml_text()) %>%
+    lubridate::fast_strptime(format = "%Y-%m-%d %H:%M:%S") %>%
+    as.POSIXct(),
+  slug = title %>% str_to_lower() %>% str_replace_all("[^a-z0-9]+", "-") %>% str_remove_all("(^-)|(-$)"),
+  tags = map_chr(items, . %>% xml_find_all(".//category") %>% xml_text() %>% paste0('"', ., '"', collapse = ", ")),
+  content = map_chr(items, . %>% xml_find_first(".//content:encoded") %>% xml_text())
+) %>%
+  filter(!is.na(published), post_id > 978)
+
+posts
+```
+
+```{r}
+make_filename <- function(published, post_id, slug) {
+  paste(as.Date(published), post_id, slug, sep = "_")
+}
+
+make_post_content <- function(title, published, content, tags) {
+  pub_timestamp <- strftime(published, format = "%Y-%m-%dT%H:%M:%S+00:00")
+  content <- str_remove_all(content, "\\[/?markdown\\]")
+  
+  glue::glue(
+    "
+---
+title: '{title}'
+author: Dewey Dunnington
+date: '{as.Date(published)}'
+slug: []
+categories: []
+tags: [{tags}]
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '{pub_timestamp}'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+{content}
+    "
+  )
+}
+
+create_post <- function(filename, content) {
+  dir <- here::here("content/post", filename)
+
+  img_url_re <- "(https?://apps.fishandwhistle.net)?(/wp-content/uploads/[0-9]+/[0-9]+/)([a-zA-Z0-9. _-]+)"
+  image_urls <- content %>%
+    str_extract_all(img_url_re) %>%
+    .[[1]] %>%
+    unique() %>%
+    tibble(href = .) %>%
+    extract(href, c("host", "path", "filename"), img_url_re, remove = FALSE) %>%
+    mutate(
+      host = na_if(host, ""),
+      url = paste0(coalesce(host, "https://apps.fishandwhistle.net"), path, filename),
+      final_path = file.path(dir, filename)
+    )
+  
+  dir.create(dir)
+  
+  if (nrow(image_urls) > 0) {
+    message("----", filename)
+    walk2(image_urls$url, image_urls$final_path, curl::curl_download)
+    replacer <- image_urls %>% select(href, filename) %>% deframe()
+    content <- str_replace_all(content, replacer)
+  }
+  
+  write_file(content, file.path(dir, "index.markdown"))
+}
+```
+
+```{r}
+posts %>%
+  transmute(
+    filename = make_filename(published, post_id, slug),
+    content = make_post_content(title, published, content, tags),
+    file = map2_chr(filename, content, create_post)
+  )
+```
+
+
