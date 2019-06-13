@@ -6,6 +6,7 @@
 [[main]]
   name = "Posts"
   url = "#posts"
+  pre = "<i class=\"fas fa-credit-card\" style=\"color: #fff;\"></i> "
   weight = 10
 
 [[main]]
