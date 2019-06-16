@@ -4,20 +4,24 @@
 #   The weight parameter defines the order that the links will appear in.
 
 [[main]]
-  name = "Posts"
-  url = "#posts"
-  pre = "<i class=\"fas fa-credit-card\" style=\"color: #fff;\"></i> "
+  name = "Home"
+  url = "/"
   weight = 10
+
+[[main]]
+  name = "Blog"
+  url = "/post"
+  weight = 20
 
 [[main]]
   name = "Projects"
   url = "#featured-projects"
-  weight = 20
+  weight = 30
 
 [[main]]
   name = "Publications"
   url = "#featured-pubs"
-  weight = 30
+  weight = 40
 
 [[main]]
   name = "CV"
