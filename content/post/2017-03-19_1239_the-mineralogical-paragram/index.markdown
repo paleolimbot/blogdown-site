@@ -71,7 +71,7 @@ data.frame(letter=chars, score=letterscore) %>%
 ```
 
 
-[caption id="attachment_1240" align="alignnone" width="672"]<img src="unnamed-chunk-3-1.png" alt="" width="672" height="480" class="size-full wp-image-1240" /> New game: mineralogical scrabble. Fun for the whole family! Your friends will all love you.[/caption]
+<figure><img src="unnamed-chunk-3-1.png"/><figcaption>New game: mineralogical scrabble. Fun for the whole family! Your friends will all love you.</figcaption></figure>
 
 
 
