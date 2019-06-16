@@ -26,7 +26,7 @@ role: Geoscientist, Programmer, Educator
 social:
 - icon: envelope
   icon_pack: fas
-  link: '#contact'
+  link: "mailto:dewey@fishandwhistle.net"
 - icon: twitter
   icon_pack: fab
   link: https://twitter.com/paleolimbot
@@ -36,10 +36,22 @@ social:
 - icon: github
   icon_pack: fab
   link: https://github.com/paleolimbot
+- icon: linkedin-in
+  icon_pack: fab
+  link: https://ca.linkedin.com/in/deweydunnington
+- icon: "orcid"
+  icon_pack: "ai"
+  link: https://orcid.org/0000-0002-9415-4582
+- icon: "researchgate"
+  icon_pack: "ai"
+  link: https://www.researchgate.net/profile/Dewey_Dunnington
+- icon: "cv"
+  icon_pack: "ai"
+  link: /cv
 superuser: true
 user_groups:
 - Researchers
 - Visitors
 ---
 
-Dewey Dunnington is an environmental researcher and programmer based in Halifax, Nova Scotia. Dewey’s environmental research investigates the mechanisms that control toxic metals in lakes, while his programming has led him to develop mobile applications, web apps, and R packages, most recently as the ggplot2 summer intern with RStudio. He is currently pursuing his Ph.D. in the Centre for Water Resources Studies at Dalhousie University.
+Dewey Dunnington is an environmental researcher, programmer, and educator based in Halifax, Nova Scotia. Dewey’s environmental research investigates the mechanisms that control toxic metals in lakes, while his programming has led him to develop mobile applications, web apps, and R packages, most recently as the [ggplot2](https://ggplot2.tidyverse.org/) summer intern with [RStudio](https://rstudio.com/). He has developed and taught many courses on R programming, Python programming, and GIS, and is a [RStudio-certified tidyverse instructor](https://blog.rstudio.com/2019/02/28/rstudio-instructor-training/). He is currently pursuing his Ph.D. in the [Centre for Water Resources Studies](http://waterstudies.ca/) at Dalhousie University.
