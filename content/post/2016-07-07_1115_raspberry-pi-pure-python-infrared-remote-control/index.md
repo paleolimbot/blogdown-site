@@ -23,7 +23,7 @@ Inspired by the ability to create scientific tech gadgets, I have two new toys o
 
 ## The wiring setup
 
-The wiring setup for this project used the [Sunfounder Raspberry Pi Sensor Kit](https://www.sunfounder.com/sensor-kit-v2-0-for-raspberry-pi-2-and-raspberry-pi-model-b.html), which has a few resistors built in. Based on some other posts involving an IR sensor and an Arduino, I think most IR sensors will function in a similar way. The IR Sensor has 3 pins: +3.3V, Signal, and Ground. The +3.3V pin gets attached to the +3.3V pin on the GPIO header, the Ground gets attached to one of the ground pins, and the Signal pin gets attached to one of the GPIO pins (in this example I use GPIO 18, or pin 11 on the header). The picture here is a bit fuzzy but my setup looked like this:
+The wiring setup for this project used the [Sunfounder Raspberry Pi Sensor Kit](https://www.sunfounder.com/37-modules-sensor-kit-v2-0-for-arduino-1829.html), which has a few resistors built in. Based on some other posts involving an IR sensor and an Arduino, I think most IR sensors will function in a similar way. The IR Sensor has 3 pins: +3.3V, Signal, and Ground. The +3.3V pin gets attached to the +3.3V pin on the GPIO header, the Ground gets attached to one of the ground pins, and the Signal pin gets attached to one of the GPIO pins (in this example I use GPIO 18, or pin 11 on the header). The picture here is a bit fuzzy but my setup looked like this:
 
 ![the sensor](Screen-Shot-2016-07-07-at-2.43.09-PM.png)
 

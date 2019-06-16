@@ -27,7 +27,7 @@ In 2018, the first (to my knowledge) [Bayesian <sup>210</sup>Pb interpretation p
 
 ### Some data
 
-I'll use the Alta Lake <sup>210</sup>Pb measurements I have from my [first published paper](https://doi.org/0.1007/s10933-016-9919-x), which also happens to be the sample dataset for the [pb210 package](http://github.com/paleolimbot/pb210).
+I'll use the Alta Lake <sup>210</sup>Pb measurements I have from my [first published paper](https://doi.org/10.1007/s10933-016-9919-x), which also happens to be the sample dataset for the [pb210 package](http://github.com/paleolimbot/pb210).
 
 ``` r
 library(pb210)
@@ -210,7 +210,7 @@ alta_lake_ages %>%
     ## 10     7.5    116.       69.2     177.  
     ## # … with 22 more rows
 
-Cool! Now we've got the data in an object we can plot. I'll put the ages that [we published](https://doi.org/0.1007/s10933-016-9919-x) on plot as well, for comparison.
+Cool! Now we've got the data in an object we can plot. I'll put the ages that [we published](https://doi.org/10.1007/s10933-016-9919-x) on plot as well, for comparison.
 
 ``` r
 alta_lake_ages %>%
