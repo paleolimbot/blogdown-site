@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1279]
 ---
 
 The <a href="http://www.ec.gc.ca/rhc-wsc/default.asp?lang=en&n=9018B5EC-1">HYDAT database</a> contains over 1 GB of hydrological observation data collected by <a href="http://ec.gc.ca/">Environment Canada</a>. The database is freely available from the Environment Canada website, however extracting data can be difficult. Recently a student in our lab was working with this data, so I adapted some previously shotty code that cleaned up the somewhat difficult to navigate database into a <a href="https://github.com/paleolimbot/hydatr">nice unit-tested R package</a>. Not doing much work in the hydrology sector myself, I'd love some feedback on what is useful and not useful about the package! Some basic usage is demonstrated below.

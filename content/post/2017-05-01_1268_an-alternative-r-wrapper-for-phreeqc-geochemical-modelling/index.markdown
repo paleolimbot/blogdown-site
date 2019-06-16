@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1268]
 ---
 
 

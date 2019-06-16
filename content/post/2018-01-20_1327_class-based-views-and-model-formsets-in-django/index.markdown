@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1327]
 ---
 
 <a href="https://docs.djangoproject.com/en/dev/topics/class-based-views/intro/">Generic class-based views in Django</a> are powerful and result in minimal code to handle the basic tasks of viewing, creating, and modifying models. Recently I was trying to find a way to create a bunch of models at once (in my case, lab samples that tend to get generated in batches) in an application using class-based views. Creating a single model using a class-based view is handled by the <a href="https://docs.djangoproject.com/en/dev/ref/class-based-views/generic-editing/">django.views.generic.CreateView class</a>, but creating multiple models using a Formset isn't supported using generic class-based views (as far as I can tell from a pretty lengthy search...). Fortunately, it is easy to do and requires very little code!

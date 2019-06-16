@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1298]
 ---
 
 In the past few months I've done some work on <a href="http://apps.fishandwhistle.net/archives/1268">PHREEQC modeling in R</a>, as well as a whole lot of XRF data work that required converting what seemed like an ungodly number of molecular concentrations (e.g. Al2O3) into elemental concentrations (Al). Both of these highlighted a need for chemical data structures in R such that user input to <a href="https://github.com/paleolimbot/easyphreeqc">easyphreeqc</a> can be properly validated and chemical calculations can be made reproducible easily. The result is <a href="https://github.com/paleolimbot/chemr">chemr</a>, which will hopefully integrate soon with other packages of the chemical persuasion.

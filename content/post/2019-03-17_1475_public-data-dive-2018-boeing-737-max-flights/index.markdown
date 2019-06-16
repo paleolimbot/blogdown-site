@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1475]
 ---
 
 The recent grounding of almost all <a href="https://en.wikipedia.org/wiki/Boeing_737_MAX">Boeing 737 MAX-series aircraft</a> in the world is, according to a recent CBC commentator, unprecedented. I’m not an aircraft expert (or even a hobbyist), but I do love data and mining publicly-available datasets. Inspired by the <a href="https://github.com/hadley/nycflights13">nycflights13 R package</a> (a dataset of all the flights in and out of New York City in 2013) and the <a href="https://www.flightradar24.com/blog/flightradar24-data-regarding-lion-air-flight-jt610/">FlightRadar24 blog post regarding Lion Air flight JT610</a>, I thought I would see what information is accessible to the public about flights that used the 737 MAX-series aircraft.

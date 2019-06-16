@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1198]
 ---
 
 Fetching data from Environment Canada's archive has always been a bit of a chore. In the old days, it was necessary to download data one click at a time from the <a href="http://climate.weather.gc.ca/historical_data/search_historic_data_e.html">organization's search page</a>. To bulk download hourly data would require a lot of clicks and a good chance of making a mistake and having to start all over again. There are several R solutions online (posted by <a href="http://www.headwateranalytics.com/blog/web-scraping-environment-canada-weather-data">Headwater Analytics</a> and <a href="http://www.fromthebottomoftheheap.net/2015/01/14/harvesting-canadian-climate-data/">From the Bottom of the Heap</a> ), but both solutions are mostly single-purpose, and don't solve the additional problem of trying to find climate locations near you. In the <a href="https://cran.r-project.org/package=rclimateca">rclimateca package</a>, I attempt to solve both of these problems to produce filtered, plot-ready data from a single command.

@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1155]
 ---
 
 A few months ago I needed to create detailed bathymetric maps for a water utility with which I was doing research. Our usual approach is to use an old Windows XP laptop with a serial port to log data from our Garmin GPS/Depth sounder unit. On the laptop, we used sofware called UnderSee Explorer (formerly Contour3D) which as far as I can tell, is now completely out of business. Usually the lakes we do research on are quite small, and the battery life of our laptops (around a few hours) is not an issue. However, the two lakes we needed to map were massive, and we needed a large amount of detail. All totalled we needed to collect bathymetric data for 5 days, which represented a significant challenge even with multiple batteries.

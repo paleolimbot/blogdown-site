@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1287]
 ---
 
 The paleolimnological data I work with most days is voluminous and difficult to wrangle. There are a lot of cores, a lot of variables, and a lot of parameters thanks to the multi-element analysis of the X-Ray Fluorescence spectrometer we've used recently on our sediment samples. However, since the advent of the tidyverse, this job has gotten a lot easier! I've been preparing some material to help students at the <a href="http://centreforwaterresourcesstudies.dal.ca/">Centre for Water Resources Studies</a> at Dalhousie and the <a href="http://paleoenvironment.acadiau.ca/home.html">Paleoenvironmental Research Group</a> at Acadia handle what are quickly becoming big data projects.

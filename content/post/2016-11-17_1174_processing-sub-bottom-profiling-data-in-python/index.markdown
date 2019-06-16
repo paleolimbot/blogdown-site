@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1174]
 ---
 
 In addition to processing bathymetric data, my research on lakes requires sub-bottom profiling, or the collection of low-energy seismic data collected similarly to bathymetric data. The system we use is the SyQwest HydroBox, which, due to many hardware and software limitations, has been particularly frustrating. Still, when it does work properly, the HydroBox data has been invaluable to our lakes research. Unfortunately, the software supplied with the HydroBox is not particularly good at visualizing the collected data after collection.

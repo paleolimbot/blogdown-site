@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1344]
 ---
 
 There is a <a href="https://github.com/tidyverse/ggplot2/issues/187">very old issue</a> in <strong>ggplot2</strong> about the ability to modify particular scales when using <code>facet_wrap()</code> or <code>facet_grid()</code>. I often have this problem when using lots of facets, as sometimes the labels overlap with eachother on some of the scales. Without a way to set the <code>breaks</code> on one particular scale, it's hard to fix this without exporting an SVG and modifying the result (it's usually possible to fix it by specifying an overall set of <code>breaks</code>, or by rotating the x labels using <code>theme(axis.text.x = element_text(angle = 90, vjust = 0.5))</code>, but sometimes it's just <em>so close</em> that it might be nice to set the breaks on just one of the panels...). A sort of contrived example:

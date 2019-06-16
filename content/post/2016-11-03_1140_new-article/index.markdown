@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1140]
 ---
 
 It's been a nearly 9-month saga, but I'm pleased to announce that my first ever peer-reviewed paper has been published in the <a href="http://link.springer.com/journal/10933">Journal of Paleolimnology</a> as of October 2016. The paper ("<a href="http://link.springer.com/article/10.1007/s10933-016-9919-x">A geochemical perspective on the impact of development at Alta Lake, British Columbia, Canada</a>") is a result of my M.Sc. work on Alta Lake in Whistler, British Columbia. Hopefully the first of many to come!

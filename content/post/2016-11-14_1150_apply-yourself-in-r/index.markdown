@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1150]
 ---
 
 A few months ago I wrote what I thought was a quite useful post on list comprehensions in R, which, after working with numerous datasets since, I have realized is almost useless. In <a href="http://apps.fishandwhistle.net/archives/1010">the post</a>, I suggested a few ways to go about generating vectors of data using non-vectorized functions. Packages such as <a href="https://cran.r-project.org/package=foreach">foreach</a>, <a href="https://cran.r-project.org/package=plyr">plyr</a>, and <a href="https://cran.r-project.org/package=dplyr">dplyr</a> offer advanced solutions to tackle advanced manipulation and grouping. Most of the time, however, all I really want is to generate a vector of data based on some existing data structure. For sample data, we'll use a sample list of latitudes and longitudes of a few locations in Nova Scotia, Canada, and try to generate a list of distances of adjacent cities.

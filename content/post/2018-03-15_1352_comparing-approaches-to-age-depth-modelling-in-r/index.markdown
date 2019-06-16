@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1352]
 ---
 
 Working with radiocarbon dating in R has long been possible, especially since the <a href="http://www.radiocarbon.org/IntCal13.htm">Intcal dataset itself</a> contains R code in the supplement. Other tools like <a href="http://chrono.qub.ac.uk/blaauw/bacon.html">Bacon</a> (<a href="http://dx.doi.org/10.1214/11-BA618">Blauuw and Christen 2011</a>), the slightly simpler <a href="http://chrono.qub.ac.uk/blaauw/clam.html">Clam</a> (<a href="http://dx.doi.org/10.1016/j.quageo.2010.01.002">Blaauw 2010</a>), and <a href="https://github.com/andrewcparnell/Bchron">BChron</a> (<a href="http://onlinelibrary.wiley.com/doi/10.1111/j.1467-9876.2008.00623.x/abstract">Haslett and Parnell 2008</a>) have helped users calibrate radiocarbon dates and produce reproducible age models. A comprehensive analysis of the quality of these and other methods is available in an article by <a href="http://journals.sagepub.com/doi/abs/10.1177/0959683616675939">Trachsel and Telford (2016)</a>.

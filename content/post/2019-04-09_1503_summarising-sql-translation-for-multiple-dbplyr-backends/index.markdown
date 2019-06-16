@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1503]
 ---
 
 Inspired by <a href="http://twitter.com/gshotwell">@gshotwell</a>, I decided to have a look into bulk translating a ton of functions to SQL. <a href="https://db.rstudio.com/dplyr/">The dplyr system to translate R code to SQL</a> is really cool, but I’ve had some trouble in the past using it to write backend-agnostic code because of slightly different implementations of functions in different database backends.

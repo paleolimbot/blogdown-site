@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1002]
 ---
 
 There was once a time in QGIS where getting Open Street Map basemaps was tricky. ArcGIS long since solved this problems with ready-made basemaps available with a few clicks, but in QGIS there was the <a href="https://plugins.qgis.org/plugins/openlayers_plugin/">OpenLayers plugin</a>, which was a rough go to use. In the first GIS short course I taught, this was the only option, so over Christmas break I decided to write something better. The result is <a href="https://plugins.qgis.org/plugins/qosm/">QOSM</a>, although since writing it I've discovered that the <a href="https://plugins.qgis.org/plugins/quick_map_services/">QuickMapServices plugin</a>, while much less searchable, is much more effective. Still the person in charge of the QGIS plugin repository let in the plugin saying it would help inspire improvement. 

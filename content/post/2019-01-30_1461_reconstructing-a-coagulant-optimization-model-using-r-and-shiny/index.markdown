@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1461]
 ---
 
 <p>Inspired by <a href="https://twitter.com/lindserinanders">Lindsay Anderson’s</a> suggestion that “somebody code up that <a href="http://doi.org/10.1002/j.1551-8833.1997.tb08229.x">Edwards 1997 model</a>”, I successfully avoided proofreading my Ph.D. thesis proposal for much of a day doing just that. The paper is a classic paper, and one of many that attempt to predict dissolved organic carbon removal using easily measurable water quality parameters (in this case, absorbance of UV radiation at 254 nm, influent DOC concentration, and coagulant dose). Lindsay has a <a href="http://doi.org/10.1021/acs.est.6b04889">great paper</a> talking about why coagulant dosing is important in an era of rapidly changing source water quality!</p>

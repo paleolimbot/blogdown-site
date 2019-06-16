@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1336]
 ---
 
 There is a lot of talk about the <b>ggplot2</b> package and the pipe. <a href="https://community.rstudio.com/t/why-cant-ggplot2-use/4372/7">Should it be used?</a> Some approaches, like the <a href="https://github.com/zeehio/ggpipe"><b>ggpipe</b> package</a>, replace many <strong>ggplot2</strong> functions, adding the plot as the first argument so they can be used with the pipe. This ignores the fact that <strong>ggplot2</strong> functions construct objects that can (and should) be re-used. Verbifying these noun functions to perform the task of creating the object <em>and</em> updating the plot object is one approach, and recently I wrote an <a href="https://github.com/paleolimbot/ggverbs">experimental R package</a> that implements it in just under 50 lines of code.

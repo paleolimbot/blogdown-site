@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1417]
 ---
 
 This post covers creating stratigraphic diagrams using <a href="https://ggplot2.tidyverse.org/">ggplot2</a>, highlighting the helpers contained within the <a href="https://github.com/paleolimbot/tidypaleo">tidypaleo package</a>, which I've been using for the past few months to create diagrams. I chose the <strong>ggplot2</strong> framework because it is quite flexible and can be used to create almost any time-stratigraphic diagram except ones that involve multiple axes (we can have a fight about whether or not those are appropriate anyway, but if you absolutely need to create them I suggest you look elsewhere). To follow along, it will help considerably if you are already familiar with <strong>ggplot2</strong> (<a href="http://r4ds.had.co.nz/data-visualisation.html">a great tutorial can be found here</a>).

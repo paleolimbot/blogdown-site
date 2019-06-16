@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1510]
 ---
 
 Paleolimnologists have been using the <a href="http://doi.org/10.1007/BF00028424">Constant Rate of Supply (CRS) and Constant Initial Concentration (CIC)</a> model to interpret <sup>210</sup>Pb dates for a very long time. Some variations like propagating error using a Monte Carlo simulation (<a href="https://doi.org/10.1007/BF00219461">Binford 1990</a> and <a href="https://doi.org/10.1016/j.quageo.2014.06.002">Sanchez-Cabeza et al. 2014</a>) instead of the usual “quadrature” method have been used, but for the most part, we have been interpreting lead-210 dates the same way since 1978 (40 years!).

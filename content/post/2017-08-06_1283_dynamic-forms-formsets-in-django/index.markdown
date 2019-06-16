@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1283]
 ---
 
 In working on a <a href="https://www.djangoproject.com/">Django</a> web app recently, I ran across the problem of creating programatically-created forms. Creating regular forms in Django is a <a href="https://docs.djangoproject.com/en/1.11/topics/forms/#building-a-form-in-django">piece of cake</a>:

@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1397]
 ---
 
 It is an exciting time for the integration of limnological and paleolimnological datasets. The <a href="https://www.waterqualitydata.us/">National (US) Water Quality Monitoring Council Water Quality Portal</a> has just made decades of state and federal water quality measurements available, the <a href="https://www.ncdc.noaa.gov/paleo-search/study/21171">Pages2k project</a> has collected hundreds of temperature proxy records for the last 2000 (ish) years, and the <a href="https://www.neotomadb.org/">Neotoma</a> database provides access to a large number of paleoecological datasets. For a final project in a course last fall, I chose to analyze the <a href="http://www.cen.ulaval.ca/CDD/About.aspx">Circumpolar Diatom Database (CDD)</a>, which is a collection of water chemistry and diatom assemblage data hosted by the Aquatic Paleoecology Laboratory at ULaval. In this post, we will (1) download and clean the data and metadata from the CDD website, and (2) use the <a href="https://cran.r-project.org/package=mudata2"><strong>mudata2</strong></a> package to extract some data. Part 2 is more exciting, so I'll put that first...

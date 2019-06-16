@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1445]
 ---
 
 A side project of mine recently has been to play with <a href="https://wwwbrr.cr.usgs.gov/projects/GWC_coupled/phreeqc/phreeqc3-html/phreeqc3.htm">PHREEQC</a>, which is a powerful geochemical modelling platform put out by the USGS. In order to make the <a href="https://cran.r-project.org/package=phreeqc">R package for phreeqc</a> more accessible, I've started to wrap a few common uses of PHREEQC in a new R package, <a href="https://github.com/paleolimbot/tidyphreeqc">tidyphreeqc</a>. In particular, I'm interested in using PHREEQC to take a look at the classic <a href="https://en.wikipedia.org/wiki/Pourbaix_diagram">Pourbaix diagram</a>, which is almost always represented in pure solution at a particular concentration of the target element, at 25°C.

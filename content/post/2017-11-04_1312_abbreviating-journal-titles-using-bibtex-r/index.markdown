@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1312]
 ---
 
 It seems that the tools for writing papers in R/RStudio keep getting better and better, to the point where it is rare that I have something I need to do to write a paper that happens outside of RStudio. One of these things is abbreviating journal names, because for whatever reason the checkbox that does this within <a href="http://zotero.org/">Zotero</a>'s BibTex export doesn't work particularly well. My way around this in the past was to wait until the article was about to be submited, and figure everything out in Microsoft Word at the very end. For my last submission (mostly as a break from fixing comma splices), I decided to automate the abbreviating of journals to save myself another manual step that, realistically, I was probably going to forget to do anyway.

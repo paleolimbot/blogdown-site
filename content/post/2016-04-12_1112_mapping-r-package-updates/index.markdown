@@ -15,6 +15,7 @@ image:
   focal_point: ''
   preview_only: no
 projects: []
+aliases: [/archives/1112]
 ---
 
 The past few months haven't been particularly productive on the R package front (I've mostly been using R for plotting lakes data), but small updates here and there have led to a bunch of exciting new features in the <a href="http://paleolimbot.github.io/prettymapr">prettymapr</a>, <a href="http://paleolimbot.github.io/rosm">rosm</a>, and <a href="http://paleolimbot.github.io/rcanvec">rcanvec</a> packages. Things like <a href="https://github.com/paleolimbot/prettymapr#geocoding-tools">geocoding</a>, <a href="https://github.com/paleolimbot/prettymapr#bounding-box-tools">finding a bounding box containing multiple queries</a>, <a href="https://github.com/paleolimbot/rosm/issues/1">exporting OSM maps to raster file formats</a>, <a href="https://github.com/paleolimbot/rcanvec#exporting-canvec-data">exporting CanVec data for multiple NTS sheets</a> have made a much smoother user experience using the three packages for basemap data. In particular, I'm using the rcanvec export function to make a bunch of basemaps for publications at the moment, which was part of the stimulus for getting this done. In the meantime, GeoGratis did make using CanVec data significantly easier recently (they started properly naming their files), so their <a href="http://geogratis.gc.ca/site/eng/extraction">data extraction tool</a> is worth a look.
