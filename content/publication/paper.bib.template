@@ -1,0 +1,10 @@
+
+@article{[[ id ]],
+  title = {[[ title ]]},
+  author = {[[ paste0(author$family, ', ', author$given, collapse = ' and ') ]]},
+  journal = {[[ `container-title` ]]},
+  year = [[ issued$`date-parts`[1] ]],
+  volume = [[ volume ]],
+  pages = {[[ page ]]},
+  doi = {[[ DOI ]]}
+}

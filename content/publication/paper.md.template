@@ -1,0 +1,26 @@
+---
+abstract: "{abstract}"
+authors: [{paste0('"', author$given, ' ', author$family, '"', collapse = ', ')}]
+date: "{paste(issued$`date-parts`[1], sprintf('%02d', issued$`date-parts`[2]), sprintf('%02d', issued$`date-parts`[2]), sep = '-')}"
+doi: "{DOI}"
+featured: false
+image:
+  caption: ""
+  focal_point: ""
+  preview_only: false
+projects: []
+publication: "{`container-title`}"
+publication_short: ""
+publication_types: ["2"]
+summary: ""
+tags: []
+title: "{title}"
+url_code: ""
+url_dataset: ""
+url_pdf: ""
+url_poster: ""
+url_project: ""
+url_slides: ""
+url_source: ""
+url_video: ""
+---
