@@ -3,7 +3,7 @@ abstract: "Separating the timing and effects of multiple watershed disturbances 
 authors: ["Dewey W. Dunnington", "I. S. Spooner", "Wendy H. Krkošek", "Graham A. Gagnon", "R. Jack Cornett", "Chris E. White", "Benjamin Misiuk", "Drake Tymstra"]
 date: "2018-06-06"
 doi: "10.1080/10402381.2018.1461715"
-featured: false
+featured: true
 image:
   caption: ""
   focal_point: ""
