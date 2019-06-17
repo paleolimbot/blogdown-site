@@ -25,3 +25,7 @@
   display: inline;
   padding-right: 10px;
 }
+
+.navbar-toggler {
+	color: #fff !important;
+}
