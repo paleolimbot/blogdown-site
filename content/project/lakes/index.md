@@ -1,23 +1,23 @@
 ---
-date: "2016-04-27T00:00:00Z"
+date: "2019-04-27"
 external_link: ""
 image:
-  caption: Photo by rawpixel on Unsplash
+  caption: Collecting a lake sediment core at Pockwock Lake, Nova Scotia.
   focal_point: Smart
 links:
 - icon: twitter
   icon_pack: fab
   name: Follow
-  url: https://twitter.com/georgecushen
+  url: https://twitter.com/paleolimbot
 slides: example
-summary: An example of using the in-built project page.
+summary: Uncovering how lakes respond to human-induced change.
 tags:
-- Deep Learning
-title: Internal Project
+- Academia
+title: Lake Science
 url_code: ""
 url_pdf: ""
 url_slides: ""
-url_video: ""
+url_video: "https://www.youtube.com/watch?v=ZA3DVoAm0fw"
 ---
 
 Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis posuere tellus ac convallis placerat. Proin tincidunt magna sed ex sollicitudin condimentum. Sed ac faucibus dolor, scelerisque sollicitudin nisi. Cras purus urna, suscipit quis sapien eu, pulvinar tempor diam. Quisque risus orci, mollis id ante sit amet, gravida egestas nisl. Sed ac tempus magna. Proin in dui enim. Donec condimentum, sem id dapibus fringilla, tellus enim condimentum arcu, nec volutpat est felis vel metus. Vestibulum sit amet erat at nulla eleifend gravida.

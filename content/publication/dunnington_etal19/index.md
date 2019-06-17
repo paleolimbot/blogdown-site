@@ -3,7 +3,7 @@ abstract: "We assessed factory-calibrated field-portable X-ray fluorescence (pXR
 authors: ["Dewey W. Dunnington", "Ian S. Spooner", "Mark L. Mallory", "Chris E. White", "Graham A. Gagnon"]
 date: "2019-03-03"
 doi: "10.1016/j.envpol.2019.03.001"
-featured: false
+featured: true
 image:
   caption: ""
   focal_point: ""
