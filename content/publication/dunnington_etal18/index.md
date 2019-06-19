@@ -8,7 +8,7 @@ image:
   caption: ""
   focal_point: ""
   preview_only: false
-projects: []
+projects: [geoscience]
 publication: "Lake and Reservoir Management"
 publication_short: ""
 publication_types: ["2"]

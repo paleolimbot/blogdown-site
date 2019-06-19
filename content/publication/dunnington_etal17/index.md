@@ -8,7 +8,7 @@ image:
   caption: ""
   focal_point: ""
   preview_only: false
-projects: []
+projects: [geoscience]
 publication: "FACETS"
 publication_short: ""
 publication_types: ["2"]

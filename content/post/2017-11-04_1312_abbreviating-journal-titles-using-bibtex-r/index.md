@@ -14,7 +14,7 @@ image:
   caption: ''
   focal_point: ''
   preview_only: no
-projects: []
+projects: [geoscience, programming]
 aliases: [/archives/1312]
 ---
 

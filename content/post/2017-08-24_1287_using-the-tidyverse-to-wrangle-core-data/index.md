@@ -14,7 +14,7 @@ image:
   caption: ''
   focal_point: ''
   preview_only: no
-projects: []
+projects: [geoscience, programming, training]
 aliases: [/archives/1287]
 ---
 
