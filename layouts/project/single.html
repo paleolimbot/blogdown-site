@@ -10,9 +10,6 @@
       {{ .Content }}
     </div>
 
-    {{ partial "tags.html" . }}
-    {{ partial "page_author.html" . }}
-
     {{ $page := . }}
     {{ $project := .File.ContentBaseName }}
 
@@ -63,6 +60,9 @@
         {{ end }}
       {{ end }}
     {{ end }}
+
+  {{ partial "tags.html" . }}
+  {{ partial "page_author.html" . }}
 
   </div>
 </article>
