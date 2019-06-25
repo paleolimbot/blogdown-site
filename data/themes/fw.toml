@@ -1,0 +1,18 @@
+# Theme metadata (mostly the default theme)
+name = "fw"
+
+# Is theme light or dark?
+light = true
+
+# Primary
+primary = "#2962ff"
+
+# Menu (copied from dark theme)
+menu_primary = "rgb(20, 22, 34)"
+menu_text = "rgba(255,255,255,0.6)"
+menu_text_active = "rgba(255,255,255,1)"
+menu_title = "#fff"
+
+# Home sections
+home_section_odd = "rgb(255, 255, 255)"
+home_section_even = "rgb(247, 247, 247)"
