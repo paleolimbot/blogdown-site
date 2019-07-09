@@ -10,7 +10,7 @@ links:
   name: Follow
   url: https://twitter.com/paleolimbot
 slides: example
-summary: Training in R, Python, and GIS
+summary: Training in gesocience, GIS, and data analytics
 tags: []
 title: Training
 url_code: ""
@@ -18,3 +18,5 @@ url_pdf: ""
 url_slides: ""
 url_video: ""
 ---
+
+Dewey is a [RStudio-certified tidyverse instructor](https://blog.rstudio.com/2019/02/28/rstudio-instructor-training/) who has led many courses in geoscience, geographic information systems (GIS), and data analytics. He has TAed courses since his second year of undergraduate work, and during his M.Sc. developed an introductory workshop for GIS using [open-source software](https://qgis.org/) which he has continued to teach over the last 5 years. He has developed and taught data analytics workshops (using R) for [paleolimnology](https://paleolimbot.github.io/r4paleolim/), [geoscience](https://github.com/paleolimbot/r4ags/), and [university professors](https://github.com/paleolimbot/r4mta/).
