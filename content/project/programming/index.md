@@ -4,11 +4,6 @@ external_link: ""
 image:
   caption: Collecting sub-bottom geophysics at Alta Lake, British Columbia.
   focal_point: Smart
-links:
-- icon: twitter
-  icon_pack: fab
-  name: Follow
-  url: https://twitter.com/paleolimbot
 slides: example
 summary: Environmental data analytics & software development
 tags: []

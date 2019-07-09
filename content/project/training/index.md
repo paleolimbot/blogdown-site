@@ -4,11 +4,6 @@ external_link: ""
 image:
   caption: Course material for an introductory R course for the 2018 PALS conference.
   focal_point: Smart
-links:
-- icon: twitter
-  icon_pack: fab
-  name: Follow
-  url: https://twitter.com/paleolimbot
 slides: example
 summary: Training in gesocience, GIS, and data analytics
 tags: []

@@ -4,11 +4,6 @@ external_link: ""
 image:
   caption: Collecting a lake sediment core at Pockwock Lake, Nova Scotia.
   focal_point: Smart
-links:
-- icon: twitter
-  icon_pack: fab
-  name: Follow
-  url: https://twitter.com/paleolimbot
 slides: example
 summary: Uncovering how lakes respond to human-induced change
 tags: []
