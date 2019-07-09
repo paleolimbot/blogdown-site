@@ -1,9 +1,4 @@
 
-.navbar-brand img {
-  display: inline;
-  padding-right: 10px;
-}
-
 .navbar-light .navbar-nav > .nav-item > .nav-link, .navbar-light .navbar-nav > .nav-item > .nav-link:focus, .navbar-light .navbar-nav > .nav-item > .nav-link:hover {
 	white-space: nowrap;
 	-webkit-transition: .2s ease;
