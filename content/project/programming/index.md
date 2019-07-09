@@ -10,7 +10,7 @@ links:
   name: Follow
   url: https://twitter.com/paleolimbot
 slides: example
-summary: Environmental data analytics
+summary: Environmental data analytics & software development
 tags: []
 title: Programming
 url_code: ""

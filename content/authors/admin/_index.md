@@ -15,9 +15,9 @@ education:
     year: 2011
 email: "dewey@fishandwhistle.net"
 interests:
-- Water Resources Management
-- R, Python, and Web Development
-- R & Python Training
+- Applied freshwater research
+- Environmental data analytics & software development
+- Geoscience, GIS, and data analytics education
 name: Dewey Dunnington
 organizations:
 - name: Dalhousie University

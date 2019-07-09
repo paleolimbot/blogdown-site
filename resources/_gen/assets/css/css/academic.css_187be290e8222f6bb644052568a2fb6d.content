@@ -1,2 +1,2 @@
 /* Source Themes Academic v4.3.1 | https://sourcethemes.com/academic/ */
-.navbar-brand img{display:inline;padding-right:10px}
+.navbar-brand img{display:inline;padding-right:10px}.navbar-light .navbar-nav>.nav-item>.nav-link,.navbar-light .navbar-nav>.nav-item>.nav-link:focus,.navbar-light .navbar-nav>.nav-item>.nav-link:hover{white-space:nowrap;-webkit-transition:.2s ease;transition:.2s ease;color:rgba(255,255,255,.6);font-weight:300}
