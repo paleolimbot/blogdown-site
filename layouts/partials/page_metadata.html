@@ -17,7 +17,7 @@
   {{ end }}
   {{ end }}
 
-  {{ if not (in (slice "talk" "page") $page.Type) }}
+  {{ if not (in (slice "talk" "page" "project") $page.Type) }}
   <span class="article-date">
     {{ $date := $page.Date.Format site.Params.date_format }}
     {{ if eq $page.Type "publication" }}
