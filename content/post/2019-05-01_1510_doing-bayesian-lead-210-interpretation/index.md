@@ -128,7 +128,7 @@ The CSV file needs to be in a very specific location in order for **Plum** to be
 
 ```r
 dir.create("~/Plum/ALGC2", recursive = TRUE)
-write_csv(alta_lake_plum, "cores/ALGC2/ALGC2.csv")
+write_csv(alta_lake_plum, "~/Plum/ALGC2/ALGC2.csv")
 ```
 
 To run Plumb, use the `runPlumb()` function. Note that this takes about 5 minutes on my machine, and may take longer on others (if you have <sup>226</sup>Ra data and require that there is a different supported <sup>210</sup>Pb concentration for each depth, apparently it will take longer). You have to tell it how many samples (counting from the bottom) are "background" (if there's no <sup>226</sup>Ra data). There's some other options but it's difficult to tell exactly what they do.
