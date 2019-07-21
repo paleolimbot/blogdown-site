@@ -6,7 +6,7 @@ education:
   courses:
   - course: PhD Civil & Resource Engineering
     institution: Dalhousie University
-    year: est. 2020
+    year: 2020
   - course: MSc Geology
     institution: Acadia University
     year: 2015

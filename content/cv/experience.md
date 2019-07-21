@@ -19,29 +19,29 @@ date_format = "Jan 2006"
 #   Begin/end multi-line descriptions with 3 quotes `"""`.
 
 [[experience]]
-  title = "Ph.D. Candidate"
-  company = "Dalhousie University"
-  company_url = "http://waterstudies.ca/"
-  location = "Wolfville, Nova Scotia"
-  date_start = "2017-01-01"
-  date_end = ""
+  title = "Intern, ggplot2"
+  company = "RStudio, Inc."
+  company_url = "https://rstudio.com/"
+  date_start = "2019-05-01"
+  date_end = "2019-07-24"
+  description = """Worked with [Hadley Wickham](http://hadley.nz) to maintain and develop new features for the popular R plotting framework [ggplot2](https://ggplot2.tidyverse.org/)."""
+
+[[experience]]
+  title = "Geoscience Interpreter"
+  company = "Adventure Canada"
+  company_url = "https://www.adventurecanada.com/"
+  date_start = "2016-05-01"
+  date_end = "2016-06-30"
+  description = """Acted as a geoscience interpreter on the Adventure Canada [Mighty St. Lawrence](https://www.adventurecanada.com/atlantic-canada-expedition-cruises/mighty-saint-lawrence) expedition from Québec City, Québec to St. John's. Newfoundland."""
 
 [[experience]]
   title = "Project Manager"
-  company = "Acadia University"
-  company_url = "https://ees.acadiau.ca/"
+  company = "Ian Spooner, P.Geo."
+  company_url = "https://ees.acadiau.ca/Ian_Spooner.html"
   location = "Wolfville, Nova Scotia"
   date_start = "2015-12-01"
   date_end = "2016-12-31"
-  description = """Managed applied lake sediment consulting and research under Dr. Ian Spooner."""
-
-[[experience]]
-  title = "M.Sc. Geology"
-  company = "Acadia University"
-  company_url = "https://ees.acadiau.ca/"
-  location = "Wolfville, Nova Scotia"
-  date_start = "2014-01-01"
-  date_end = "2015-11-30"
+  description = """Managed applied lakes consulting and research under Dr. Ian Spooner, P.Geo."""
 
 [[experience]]
   title = "Project Coordinator"
@@ -49,14 +49,6 @@ date_format = "Jan 2006"
   location = "Calgary, Alberta"
   date_start = "2012-01-01"
   date_end = "2013-12-31"
-  description = """On-site coordinator for environmental remediation and emergency spill response for the upstream oil and gas industry."""
-
-[[experience]]
-  title = "B.Sc.H. Environmental Science"
-  company = "Acadia University"
-  company_url = "https://ees.acadiau.ca/"
-  location = "Wolfville, Nova Scotia"
-  date_start = "2007-09-01"
-  date_end = "2011-12-31"
+  description = """On-site coordinator for environmental remediation and emergency spill response in the upstream oil and gas industry."""
 
 +++
