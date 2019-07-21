@@ -9,9 +9,9 @@
   </span>
   ({{- .Date.Format "2006" -}}).
   {{ if .Params.doi }}
-  <a href="https://doi.org/{{ .Params.doi }}" itemprop="name">{{ .Title }}</a>.
+  <a href="https://doi.org/{{ .Params.doi }}" target="_blank" itemprop="name">{{ .Title }}</a>.
   {{ else if .Params.url_pdf }}
-  <a href="{{ .Params.url_pdf }}" itemprop="name">{{ .Title }}</a>.
+  <a href="{{ .Params.url_pdf }}" target="_blank" itemprop="name">{{ .Title }}</a>.
   {{ else }}
   <a href="{{ .RelPermalink }}" itemprop="name">{{ .Title }}</a>.
   {{ end }}
@@ -29,9 +29,9 @@
     {{ partial "page_metadata_authors" . }}
   </span>.
   {{ if .Params.doi }}
-  <a href="https://doi.org/{{ .Params.doi }}" itemprop="name">{{ .Title }}</a>.
+  <a href="https://doi.org/{{ .Params.doi }}" target="_blank" itemprop="name">{{ .Title }}</a>.
   {{ else if .Params.url_pdf }}
-  <a href="{{ .Params.url_pdf }}" itemprop="name">{{ .Title }}</a>.
+  <a href="{{ .Params.url_pdf }}" target="_blank" itemprop="name">{{ .Title }}</a>.
   {{ else }}
   <a href="{{ .RelPermalink }}" itemprop="name">{{ .Title }}</a>.
   {{ end }}
