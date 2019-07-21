@@ -8,7 +8,7 @@ image:
   caption: ""
   focal_point: ""
   preview_only: false
-projects: []
+projects: ["training"]
 publication: "Atlantic Division of the Canadian Association of Geographers"
 publication_short: ""
 publication_types: ["1"]
