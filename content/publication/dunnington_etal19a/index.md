@@ -1,6 +1,6 @@
 ---
 abstract: ""
-authors: ["D. W. Dunnington", "Braden R. B. Gregory", "I. S. Spooner", "Christopher E. White", "Graham A. Gagnon"]
+authors: ["admin", "Braden R. B. Gregory", "I. S. Spooner", "Christopher E. White", "Graham A. Gagnon"]
 date: "2019-12-31"
 doi: ""
 featured: false
