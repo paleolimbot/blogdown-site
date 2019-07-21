@@ -10,6 +10,7 @@ for(original_item in papers) {
   item$issue <- item$issue %||% ""
   item$volume <- item$volume %||% ""
   item$page <- item$page %||% ""
+  item$DOI <- item$DOI %||% ""
   
   item_dir <- file.path("content/publication", item$id)
   if (dir.exists(item_dir)) {
