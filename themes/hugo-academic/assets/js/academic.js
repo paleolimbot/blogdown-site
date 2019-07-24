@@ -11,9 +11,13 @@
    * Responsive scrolling for URL hashes.
    * --------------------------------------------------------------------------- */
 
-  // Dynamically get responsive navigation bar offset.
-  let $navbar = $('.navbar');
-  let navbar_offset = $navbar.innerHeight();
+  // Dynamically get responsive navigation bar height for offsetting Scrollspy.
+  function getNavBarHeight() {
+    let $navbar = $('.navbar');
+    let navbar_offset = $navbar.innerHeight();
+    console.debug('Navbar height: ' + navbar_offset);
+    return navbar_offset;
+  }
 
   /**
    * Responsive hash scrolling.
@@ -23,18 +27,22 @@
    */
   function scrollToAnchor(target) {
     // If `target` is undefined or HashChangeEvent object, set it to window's hash.
-    target = (typeof target === 'undefined' || typeof target === 'object') ? window.location.hash : target;
-    // Escape colons from IDs, such as those found in Markdown footnote links.
-    target = target.replace(/:/g, '\\:');
+    // Decode the hash as browsers can encode non-ASCII characters (e.g. Chinese symbols).
+    target = (typeof target === 'undefined' || typeof target === 'object') ? decodeURIComponent(window.location.hash) : target;
+    // Escape special chars from IDs, such as colons found in Markdown footnote links.
+    target = '#' + $.escapeSelector(target.substring(1));  // Previously, `target = target.replace(/:/g, '\\:');`
 
     // If target element exists, scroll to it taking into account fixed navigation bar offset.
     if($(target).length) {
+      let elementOffset = Math.ceil($(target).offset().top - getNavBarHeight());  // Round up to highlight right ID!
       $('body').addClass('scrolling');
       $('html, body').animate({
-        scrollTop: $(target).offset().top - navbar_offset
+        scrollTop: elementOffset
       }, 600, function () {
         $('body').removeClass('scrolling');
       });
+    }else{
+      console.warn('Cannot scroll to '+target+'. ID not found!');
     }
   }
 
@@ -43,9 +51,16 @@
     let $body = $('body');
     let data = $body.data('bs.scrollspy');
     if (data) {
-      data._config.offset = navbar_offset;
+      data._config.offset = getNavBarHeight();
       $body.data('bs.scrollspy', data);
       $body.scrollspy('refresh');
+    }
+  }
+
+  function removeQueryParamsFromUrl() {
+    if (window.history.replaceState) {
+      let urlWithoutSearchParams = window.location.protocol + "//" + window.location.host + window.location.pathname + window.location.hash;
+      window.history.replaceState({path:urlWithoutSearchParams}, '', urlWithoutSearchParams);
     }
   }
 
@@ -67,8 +82,15 @@
 
       // Use jQuery's animate() method for smooth page scrolling.
       // The numerical parameter specifies the time (ms) taken to scroll to the specified hash.
+      let elementOffset = Math.ceil($(hash).offset().top - getNavBarHeight());  // Round up to highlight right ID!
+
+      // Uncomment to debug.
+      // let scrollTop = $(window).scrollTop();
+      // let scrollDelta = (elementOffset - scrollTop);
+      // console.debug('Scroll Delta: ' + scrollDelta);
+
       $('html, body').animate({
-        scrollTop: $(hash).offset().top - navbar_offset
+        scrollTop: elementOffset
       }, 800);
     }
   });
@@ -293,9 +315,27 @@
 
   function toggleSearchDialog() {
     if ($('body').hasClass('searching')) {
+      // Clear search query and hide search modal.
       $('[id=search-query]').blur();
-      $('body').removeClass('searching');
+      $('body').removeClass('searching compensate-for-scrollbar');
+
+      // Remove search query params from URL as user has finished searching.
+      removeQueryParamsFromUrl();
+
+      // Prevent fixed positioned elements (e.g. navbar) moving due to scrollbars.
+      $('#fancybox-style-noscroll').remove();
     } else {
+      // Prevent fixed positioned elements (e.g. navbar) moving due to scrollbars.
+      if ( !$('#fancybox-style-noscroll').length && document.body.scrollHeight > window.innerHeight ) {
+        $('head').append(
+          '<style id="fancybox-style-noscroll">.compensate-for-scrollbar{margin-right:' +
+          (window.innerWidth - document.documentElement.clientWidth) +
+          'px;}</style>'
+        );
+        $('body').addClass('compensate-for-scrollbar');
+      }
+
+      // Show search modal.
       $('body').addClass('searching');
       $('.search-results').css({opacity: 0, visibility: 'visible'}).animate({opacity: 1}, 200);
       $('#search-query').focus();
@@ -364,12 +404,33 @@
     $('#TableOfContents li').addClass('nav-item');
     $('#TableOfContents li a').addClass('nav-link');
 
-    // Set dark mode if user chose it.
-    let default_mode = 0;
-    if ($('body').hasClass('dark')) {
-      default_mode = 1;
+    // Fix Mmark task lists (remove bullet points).
+    $("input[type='checkbox'][disabled]").parents('ul').addClass('task-list');
+
+    // Fix Mermaid.js clash with Highlight.js.
+    let mermaids = [];
+    [].push.apply(mermaids, document.getElementsByClassName('language-mermaid'));
+    for (i = 0; i < mermaids.length; i++) {
+      $(mermaids[i]).unwrap('pre');  // Remove <pre> wrapper.
+      $(mermaids[i]).replaceWith(function(){
+        // Convert <code> block to <div> and add `mermaid` class so that Mermaid will parse it.
+        return $("<div />").append($(this).contents()).addClass('mermaid');
+      });
     }
-    let dark_mode = parseInt(localStorage.getItem('dark_mode') || default_mode);
+
+    // Get theme variation (day/night).
+    let defaultThemeVariation;
+    if ($('body').hasClass('dark')) {
+      // The `color_theme` of the site is dark.
+      defaultThemeVariation = 1;
+    } else if ($('.js-dark-toggle').length && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      // The visitor prefers dark themes and switching to the dark variation is allowed by admin.
+      defaultThemeVariation = 1;
+    } else {
+      // Default to day (light) theme.
+      defaultThemeVariation = 0;
+    }
+    let dark_mode = parseInt(localStorage.getItem('dark_mode') || defaultThemeVariation);
 
     // Is code highlighting enabled in site config?
     const codeHlEnabled = $('link[title=hl-light]').length > 0;
@@ -411,6 +472,9 @@
    * --------------------------------------------------------------------------- */
 
   $(window).on('load', function() {
+    // Re-initialize Scrollspy with dynamic navbar height offset.
+    fixScrollspy();
+
     if (window.location.hash) {
       // When accessing homepage from another page and `#top` hash is set, show top of page (no hash).
       if (window.location.hash == "#top") {
@@ -423,10 +487,6 @@
         scrollToAnchor();
       }
     }
-
-    // Initialize Scrollspy.
-    let $body = $('body');
-    $body.scrollspy({offset: navbar_offset });
 
     // Call `fixScrollspy` when window is resized.
     let resizeTimer;

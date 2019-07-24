@@ -8,5 +8,4 @@
   HUGO_ENABLEGITINFO = "true"
   
 [context.branch-deploy.environment]
-  HUGO_ENV = "production"
   HUGO_VERSION = "0.55.6"

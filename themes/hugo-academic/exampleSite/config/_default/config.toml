@@ -18,9 +18,6 @@ copyright = ""
 # Enable analytics by entering your Google Analytics tracking ID
 googleAnalytics = ""
 
-# Enable comments by entering your Disqus shortname
-disqusShortname = ""
-
 ############################
 ## Advanced options below ##
 ############################
@@ -35,6 +32,7 @@ enableGitInfo = false
 defaultContentLanguage = "en"
 hasCJKLanguage = false  # Set `true` for Chinese/Japanese/Korean languages.
 defaultContentLanguageInSubdir = false
+removePathAccents = true  # Workaround for https://github.com/gohugoio/hugo/issues/5687
 
 paginate = 10  # Number of items per page in paginated lists.
 enableEmoji = true
