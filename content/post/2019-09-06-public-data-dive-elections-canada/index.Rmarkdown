@@ -1,0 +1,268 @@
+---
+title: "Public Data Dive: Canada's Elections"
+author: Dewey Dunnington
+date: '2019-09-06'
+slug: public-data-dive-elections-canada
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-09-06T09:46:25-03:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+theme_set(theme_bw(9) + theme(strip.background = element_blank()))
+selected_parties <- c("Liberal", "Conservative", "New Democratic Party", "Green")
+p_empty <- ggplot(mapping = aes(x = factor(ElectionDate), y = prop)) +
+  scale_x_discrete(labels = lubridate::year) +
+  scale_y_continuous(
+    expand = expand_scale(mult = c(0, 0.05)), 
+    labels = scales::percent_format(accuracy = 1),
+    breaks = seq(0, 1, by = 0.1)
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1),
+    legend.position = "bottom"
+  ) +
+  scale_fill_manual(
+    aesthetics = c("colour", "fill"),
+    limits = c(selected_parties, "All"),
+    values = c("#ee3124", "#0c499c", "#f6821f", "#75c223", "grey50")
+  ) +
+  labs(x = "Election Date", y = "Proportion of candidates", fill = NULL, col = NULL)
+
+
+knitr::opts_chunk$set(fig.path = "")
+```
+
+Driving this week I heard an excellent piece on [the CBC's The Current](https://www.cbc.ca/radio/thecurrent) entitled [Set up to fail: Why women still don't win elections as often as men in Canada](https://ici.radio-canada.ca/info/2019/elections-federales/femmes-hommes-probabilites-vote-egalite-chateaux-forts/index-en.html). I love data science journalism, and the piece made me curious about the dataset, which the interviewee indicated was "downloaded from the parliament website".
+
+The website in question is [here](https://lop.parl.ca/sites/ParlInfo/default/en_CA/ElectionsRidings/Elections), and it's a very cool summary from the Library of Parliament of every candidate who has ever run in a Federal election. Unfortunately it's using some kind of JavaScript to load, process, and display the data, so it's hard to web scrape (although possible using something like PhantomJS). When faced with this, I usually turn to Mozilla's "Network" tool, which looks for network requests from a page. I hit "refresh" and sure enough a 5-second download from a web API appeared.
+
+It should be said that webscraping should be done responsibly (and legally!). I'm not an expert, but I checked the site's [robots.txt](https://lop.parl.ca/robots.txt) and the [Important Notices](https://lop.parl.ca/ImportantNotices-e.html) page to look for some provision that automated access was disallowed or discouraged. I didn't attempt to spoof my `User-Agent`, and I only queried the site once, using `curl::curl_download()`:
+
+```{r, eval=FALSE}
+curl::curl_download(
+  "https://lop.parl.ca/ParlinfoWebApi/Parliament/GetCandidates",
+  "candidates.xml"
+)
+```
+
+The result is an XML file that looks something like this:
+
+```xml
+<ArrayOfElectionCandidateForWeb>
+  <ElectionCandidateForWeb>
+    <key>value</key>
+    ...
+  </ElectionCandidateForWeb>
+  ...
+</ArrayOfElectionCandidateForWeb>
+```
+
+Reading XML isn't quite as easy as JSON (or even HTML with the [rvest](http://rvest.tidyverse.org/) package), but the [xml2](https://xml2.r-lib.org/) package is quite good, and the simple structure of the XML is such that we can avoid having to learn XPATH to access its contents. Because the "key" is always the `xml_name()` of the node, and the value is always the `xml_text()` of the node, we can turn each `<ElectionCandidateForWeb>` node into a tibble using the following code:
+
+```{r, eval=FALSE}
+library(xml2)
+
+read_candidate_node <- function(candidate_node) {
+  children <- xml_children(candidate_node)
+  values <- as.list(xml_text(children))
+  names(values) <- xml_name(children)
+  as_tibble(values)
+}
+```
+
+The result of `xml_children()` is list-like, so we can use the [purrr](https://purrr.tidyverse.org/) functionals to apply `read_candidate_node()` along it:
+
+```{r, eval=FALSE}
+candidates_xml <- read_xml("candidates.xml")
+
+candidates_raw <- candidates_xml %>%
+  xml_children() %>%
+  map_dfr(read_candidate_node)
+```
+
+```{r, echo=FALSE}
+# write_rds(candidates_raw, "candidates_raw.rds", compress = "gz")
+candidates_raw <- read_rds("candidates_raw.rds")
+```
+
+The data is already clean, but we don't need all the columns, and because the [Conservative Party of Canada](https://en.wikipedia.org/wiki/Conservative_Party_of_Canada) is a fairly recent amalgamation of several conservative parties (including the Progressive Conservatives), to do any kind of analysis over time we need to sanitize the values. I'm also going to filter out elections that weren't general elections, restrict my analysis to the Liberal, Conservative (and Progressive Conservative), New Democratic, and Green parties (the [RadioCanada study](https://ici.radio-canada.ca/info/2019/elections-federales/femmes-hommes-probabilites-vote-egalite-chateaux-forts/index-en.html) includes an analysis of the Bloc Québécois, if you are interested).
+
+```{r}
+selected_parties <- c("Liberal", "Conservative", "New Democratic Party", "Green")
+
+candidates <- candidates_raw %>%
+  select(
+    # information about the person
+    PersonId, PersonLastFirstName, Gender,
+    # information about the riding
+    ConstituencyId,  ConstituencyEn, ProvinceEn,
+    # information specific to the election
+    ElectionId, ElectionDate, ParliamentNumber, IsGeneral,
+    # information specific to each person + riding + election
+    Votes, ResultLongEn, OtherResultLongEn,
+    # information about the party
+    PartyOrganizationId, PartyNameEn
+  ) %>%
+  rename_all(str_remove_all, "En|Long") %>%
+  mutate_all(na_if, "") %>%
+  mutate_at(vars(ends_with("Id"), Votes, ParliamentNumber), as.numeric) %>%
+  mutate(
+    ElectionDate = as.Date(ElectionDate),
+    IsGeneral = IsGeneral == "true",
+    PartyName = str_replace(
+      PartyName, 
+      "Progressive Conservative Party", 
+      "Conservative Party of Canada"
+    ) %>%
+      str_remove(" Party of Canada")
+  ) %>%
+  filter(
+    IsGeneral, 
+    PartyName %in% selected_parties, 
+    ElectionDate > as.Date("1920-01-01")
+  ) %>%
+  mutate(PartyName = factor(PartyName, levels = selected_parties))
+
+candidates
+```
+
+Featuring prominently in the [RadioCanada study](https://ici.radio-canada.ca/info/2019/elections-federales/femmes-hommes-probabilites-vote-egalite-chateaux-forts/index-en.html) is the idea of "stronghold" ridings, or ridings that have consistently elected the same party for several elections. Because ridings change according to population distribution, the study matched ridings that changed geographically. A [historical riding list](https://lop.parl.ca/sites/ParlInfo/default/en_CA/ElectionsRidings/Ridings) is also available from the Library of Parliament website for those interested in matching up the ridings exactly, but as a quick substitute, I just used the name and province of the riding. To find ridings whose previous two elections had resulted in the same party being elected, I used a grouped mutate to calculate the vote percentage margin. Then I used a grouped mutate (after arranging each group by `ElectionDate`) plus `lag()` to compare previous values of `PartyName` and `VoteMargin`.
+
+```{r}
+strongholds <- candidates %>%
+  
+  # find out who won each election and by what percent of the vote
+  group_by(ElectionId, ConstituencyId) %>%
+  arrange(desc(Votes)) %>%
+  mutate(
+    VotePercent = Votes / sum(Votes) * 100,
+    VoteMargin = VotePercent - lead(VotePercent, default = 0)
+  ) %>%
+  filter(VotePercent == max(VotePercent), Result == "Elected") %>%
+  
+  # look at the same constituency over time to determine "stronghold"
+  # status
+  group_by(Province, Constituency) %>%
+  arrange(ElectionDate) %>%
+  mutate(
+    SamePartyVictory = lag(PartyName, 2) == lag(PartyName, 1),
+    LargeVoteMargin = lag(VoteMargin, 1) >= 10 & lag(VoteMargin, 2) >= 10,
+    WasStronghold = SamePartyVictory & LargeVoteMargin,
+    StrongholdParty = if_else(WasStronghold, lag(PartyName, 1), PartyName[NA])
+  ) %>%
+  filter(!is.na(WasStronghold)) %>%
+  select(Province, Constituency, ElectionDate, WasStronghold, StrongholdParty)
+
+strongholds
+```
+
+This simple method of calculating "strongholds" isn't as robust as Radio Canada's, whose method was able to assess the stronghold status of many more ridings. My quick-and-dirty method probably has a bias towards rural ridings whose name might be less likely to change. Still, it allows us to continue with Radio Canada's analysis (knowing that our results might reflect a different population of candidates).
+
+One of the first items in the story is that there is an increasing number of woman candidates over time, and that this is true for all major political parties. This is a classic `group_by()` and `summarise()` on `candidates`, with a grouped mutate to calculate the proportions:
+
+```{r}
+candidates_by_gender <- candidates %>%
+  group_by(ElectionDate, Gender) %>%
+  summarise(n = n()) %>%
+  group_by(ElectionDate) %>%
+  mutate(prop = n / sum(n))
+
+candidates_by_gender
+```
+
+```{r}
+candidates_by_gender_by_party <- candidates %>%
+  group_by(ElectionDate, PartyName, Gender) %>%
+  summarise(n = n()) %>%
+  group_by(ElectionDate, PartyName) %>%
+  mutate(prop = n / sum(n))
+
+candidates_by_gender_by_party
+```
+
+```{r, echo=FALSE}
+p_all <- p_empty + 
+  geom_line(
+    aes(group = 1, col = "All"),
+    data = candidates_by_gender %>% filter(Gender == "F")
+  )
+
+p_party <- p_all +
+  geom_line(
+    aes(col = PartyName, group = PartyName, linetype = "All"),
+    data = candidates_by_gender_by_party %>% filter(Gender == "F")
+  ) +
+  facet_wrap(vars(PartyName)) +
+  guides(col = FALSE) +
+  labs(
+    title = "Proportion of woman candidates recruited to run in Canadian elections",
+    caption = "Source: Library of Parliament\nGrey line indicates proportion for all parties",
+    y = "Proportion of candidates"
+  )
+
+p_party + guides(linetype = FALSE)
+```
+
+By this analysis it looks like the NDP recruits woman candidates at a higher-than-average proportion, while the Conservative parties have historically recruited at below-average levels. This is consistent with Radio Canada's analysis, which only covered the last three elections.
+
+To crunch the numbers by stronghold, we need to assign a column with the riding type. Based on our "stronghold" metric, we can detect when (1) a candidate is running in a riding they are likely to win, (2) when a candidate is running in a riding that someone else is likely to win, (3) when the riding could elect any of the candidates, and (4) the stronghold status of the riding couldn't be determined (an `NA` value for `WasStronghold`). For this analysis I'm going to ditch the ridings that couldn't be determined, which was anywhere between 1/2 and 3/4 of the ridings, depending on the election (for comparison, Radio Canada's much better method was able to match 95% of ridings between 2015 and the present districts).
+
+```{r}
+woman_candidates_by_stronghold <- candidates %>%
+  left_join(strongholds, by = c("Constituency", "Province", "ElectionDate")) %>%
+  mutate(
+    StrongholdStatus = case_when(
+      WasStronghold & StrongholdParty == PartyName ~ "Easy-to-win",
+      WasStronghold & StrongholdParty != PartyName ~ "Hard-to-win",
+      is.na(WasStronghold) ~ NA_character_,
+      TRUE ~ "Toss-up"
+    )
+  ) %>%
+  filter(!is.na(StrongholdStatus)) %>%
+  group_by(ElectionDate, StrongholdStatus, Gender) %>%
+  summarise(n = n()) %>%
+  group_by(ElectionDate, Gender) %>%
+  mutate(prop = n / sum(n))
+
+woman_candidates_by_stronghold
+```
+
+```{r, echo=FALSE, message=FALSE}
+p_empty + 
+  geom_area(
+    aes(group = StrongholdStatus, fill = StrongholdStatus),
+    data = woman_candidates_by_stronghold %>% 
+      filter(ElectionDate >= as.Date("1950-01-01"), Gender == "F") %>%
+      mutate(
+        StrongholdStatus = factor(
+          StrongholdStatus,
+          levels = c("Hard-to-win", "Toss-up", "Easy-to-win")
+        )
+      )
+  ) +
+  scale_fill_viridis_d() +
+  scale_y_continuous(
+    breaks = waiver(), 
+    labels = scales::percent_format(accuracy = 1), 
+    limits = c(0, NA)
+  ) +
+  labs(
+    title = "In which types of ridings were women recruited to run?",
+    colour = "Riding type",
+    caption = "Source: Library of Parliament"
+  ) +
+  coord_cartesian(expand = FALSE)
+```
+
+In Radio Canada's analysis, the percentage of women candidates who were placed in easy-to-win ridings was around 23%...in this analysis, it is more like 10% (a much more bleak picture for women candidates), probably because I wasn't able to detect the stronghold-or-not status of most ridings. The "set up to fail" headline of the article likely refers to the 25-50% of women candidates who are placed in a riding where they probably aren't going to win (the dark purple are of the graphic).
