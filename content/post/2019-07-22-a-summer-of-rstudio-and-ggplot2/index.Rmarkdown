@@ -26,14 +26,7 @@ knitr::opts_chunk$set(fig.path = "")
 
 For those of you wondering why I haven't been tweeting and/or blogging about mud and lakes all summer, it's because I had the incredible opportunity to spend the summer as an [RStudio](https://rstudio.com/) intern working with [Hadley Wickham](http://hadley.nz) on [ggplot2](https://ggplot2.tidyverse.org/)! It was a welcome change of pace from writing articles about mud in lakes, and I'm sad the internship is coming to a close. I had the opportunity to work alongside [a lot of great interns](https://blog.rstudio.com/2019/03/25/summer-interns-2019/) at a [fantastic company](https://rstudio.com/), prepare [tons of issues for tidy-dev-day at UseR!](https://github.com/tidyverse/ggplot2/issues?page=1&q=is%3Aissue+label%3A%22tidy-dev-day+%3Anerd_face%3A%22&utf8=%E2%9C%93), and develop a few humble new features for ggplot2! Here are a few of them:
 
-```{r, eval=FALSE}
-# not all these changes are merged yet, so to run this
-# you'll need to
-remotes::install_github("tidyverse/ggplot2#3398")
-library(ggplot2)
-```
-
-```{r, include=FALSE}
+```{r}
 library(ggplot2)
 ```
 

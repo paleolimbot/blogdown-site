@@ -26,13 +26,8 @@ For those of you wondering why I haven't been tweeting and/or blogging about mud
 
 
 ```r
-# not all these changes are merged yet, so to run this
-# you'll need to
-remotes::install_github("tidyverse/ggplot2#3398")
 library(ggplot2)
 ```
-
-
 
 ### New vignette on using ggplot2 in packages
 
@@ -53,7 +48,7 @@ patchwork::wrap_plots(
 )
 ```
 
-<img src="unnamed-chunk-3-1.png" width="672" />
+<img src="unnamed-chunk-2-1.png" width="672" />
 
 It's common for an issue to be opened for cases where this is non-intuitive (`stat_summary()` comes to mind - it's not intuitive that summary statistics are not calculated on the original data), and the response is often that `coord_trans()` should be used instead of a transformed scale. However, there were [problems with the expansion of discrete scales in coord_trans()](https://github.com/tidyverse/ggplot2/issues/3338) that prevented `coord_trans()` from being a viable solution. In the [PR fixing this](https://github.com/tidyverse/ggplot2/pull/3380), I also fixed a [problem with second axes in coord_trans()](https://github.com/tidyverse/ggplot2/issues/2990), and made sure that the `"reverse"` trans worked (it didn't before, but it doesn't appear that anybody noticed). Hopefully `coord_trans()` is now ready to serve as a drop-in replacement  when `scale_(x|y)_log10()` gives non-intuitive results!
 
@@ -73,7 +68,7 @@ patchwork::wrap_plots(
 ## Warning: Removed 5222 rows containing non-finite values (stat_boxplot).
 ```
 
-<img src="unnamed-chunk-4-1.png" width="672" />
+<img src="unnamed-chunk-3-1.png" width="672" />
 
 In this example, using scale limits leads to displaying spurious information about where the min and max of the data are. When this issue comes up, the response is usually that the user should use `coord_cartesian(ylim = ...)` instead of `scale_y_continuous(limits = ...)`. Scale limits have this awesome feature where you can pass `NA` as one or more of the limits to refer to the minimum or maximum of the data, but this previously wasn't possible for coordinate system limits. Now it is! It's particularly useful with facets where `scales = "free"`:
 
@@ -85,7 +80,7 @@ ggplot(diamonds, aes(color, price)) +
   coord_cartesian(ylim = c(0, NA))
 ```
 
-<img src="unnamed-chunk-5-1.png" width="672" />
+<img src="unnamed-chunk-4-1.png" width="672" />
 
 ### Axis guide improvements
 
@@ -103,4 +98,4 @@ ggplot(mpg, aes(hwy, cty)) +
   guides(x = guide_axis(check.overlap = TRUE))
 ```
 
-<img src="unnamed-chunk-6-1.png" width="672" />
+<img src="unnamed-chunk-5-1.png" width="672" />
