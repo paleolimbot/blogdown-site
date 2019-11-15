@@ -30,7 +30,7 @@ theme_set(theme_void())
 knitr::opts_chunk$set(fig.path = "")
 ```
 
-I've been curious about bathymetry ever since I was a kid, where I could often be found pouring over charts of Lake Champlain during family sailing vacations. Little did I know that two decades later I would be making some of those maps myself! I often work on small lakes, and the ability to compute simple bathymetry without leaving R is something I've been toying with but never written up. After meeting some folks at the North American Lake Management Society conference that were curious about how to do all the steps without resorting to Arc or QGIS, I decided it was time. While my favourite interpolation method isn't available in R ([regularized spline tension](https://doi.org/10.1007/BF00893171) from the GRASS toolbox in QGIS), a number of others are, including TIN, Inverse Distance Weighting (IDW), and GAM methods.
+I've been curious about bathymetry ever since I was a kid, when I could often be found pouring over charts of Lake Champlain during family sailing vacations. Little did I know that two decades later I would be making some of those maps myself! I often work on small lakes, and the ability to compute simple bathymetry without leaving R is something I've been toying with but never written up. After meeting some folks at the North American Lake Management Society conference that were curious about how to do all the steps without resorting to Arc or QGIS, I decided it was time. While my favourite interpolation method isn't available in R ([regularized spline tension](https://doi.org/10.1007/BF00893171) from the GRASS toolbox in QGIS), a number of others are, including TIN, Inverse Distance Weighting (IDW), and GAM methods.
 
 I'll start with the loading of packages: I use the [tidyverse](https://tidyverse.org/) for dplyr and ggplot2, I use [sf](https://r-spatial.github.io/sf) for spatial reading, writing, and manipulation, and I use [ggspatial](https://github.com/paleolimbot/ggspatial) for the example data and some plotting help.
 
@@ -102,7 +102,7 @@ grid <- st_make_grid(depths, cellsize = c(10, 10), what = "centers") %>%
 
 ### TIN
 
-The triangular irregular network surface (TIN) connects points using a Delaunay triangulation (a network of triangles as round as possible) and approximates each triangle as a plane. It results in contours that are pointier than you may be hoping for, but doesn't predict any values higher or lower than you measured and is a good reality check on any other method as it has fewer assumptions. This can be done using the `interpp()` (two p's!) function in the [interp](https://cran.r-project.org/package=interp) (one p!) package:
+The triangular irregular network surface (TIN) connects points using a Delaunay triangulation (a network of triangles as round as possible) and approximates each triangle as a plane. It results in contours that are pointier than you may be hoping for, but doesn't predict any values higher or lower than you measured and is a good reality check on any other method as its main assumption is that you bothered to take a depth measurement anywhere that it mattered. This can be done using the `interpp()` (two p's!) function in the [interp](https://cran.r-project.org/package=interp) (one p!) package:
 
 ```{r}
 fit_TIN <- interp::interpp(
@@ -136,11 +136,11 @@ grid$IDW <- predict(fit_gstat, newdata = as(grid, "Spatial")) %>%
   pull(1)
 ```
 
-The `gstat::gstat()` function returns a "fit" object, which we can then pass to `predict()` to get values at new locations. This is a common idiom in R. The gstat package uses spatial objects, but uses the version of spatial objects from the older sp package. You can convert between these using `as(sf_object, "Spatial")` and `st_as_sf()`, respectively. 
+The `gstat::gstat()` function returns a "fit" object, which we can then pass to `predict()` to get values at new locations. This is a common idiom in R. The gstat package uses spatial objects, but uses the version of spatial objects from the older sp package. You can convert between these using `as(sf_object, "Spatial")` and `st_as_sf()`. 
 
 ### Thin Plate Regression Spline (TPRS)
 
-Ever since I read [Gavin Simpson's excellent blog post on bathymetry using GAMs](https://www.fromthebottomoftheheap.net/2016/03/27/soap-film-smoothers/) I've wanted to give it a shot! A GAM is a general additive model, and is usually used for smoothing. For bathymetry maps, this means nice smooth contour lines, possibly at the expense of reality. You will need to fiddle with the `k` value to make sure the level of smoothness matches what you were looking for. According to the blog post, this is called a "thin plate regression spline".
+Ever since I read [Gavin Simpson's excellent blog post on bathymetry using GAMs](https://www.fromthebottomoftheheap.net/2016/03/27/soap-film-smoothers/) I've wanted to give it a shot! A GAM is a general additive model, and tends to produce nice smooth surfaces. For bathymetry maps, this means nice smooth contour lines, possibly at the expense of reality. You will need to fiddle with the `k` value to make sure the level of smoothness matches your idea of how smooth the lake bottom is. According to the blog post, this is called a "thin plate regression spline".
 
 ```{r}
 library(mgcv)
@@ -152,7 +152,7 @@ The TPRS method also uses the "fit then predict" idiom, and uses the x, y, and d
 
 ### Soap Film Smooth
 
-Another method that uses a GAM is a soap film smoother, which actively takes into account the border boundary condition. Specifying the boundary is a bit interesting as it uses a custom format, but following the instructions in the blog post I was able to make it work. I had to disregard the first point because the first and last points were identical in my input, which resulted in errors fitting the model. The soap film smoother also needs explicit knot locations (the place where the splines join together) that are (well) within the boundary. I made this work by making another grid and excluding points that were outside the boundary or were inside the boundary by 10 meters or less (that's why there's an `st_buffer(10)` in there).
+Another method that uses a GAM is a soap film smoother, which actively takes into account the border boundary condition. Specifying the boundary is a bit interesting as it uses a custom format, but following the instructions in the blog post I was able to make it work. I had to disregard the first point in `boundary_coords` because the first and last points were identical, which resulted in errors fitting the model. The soap film smoother also needs explicit knot locations (the place where the splines join together) that are (well) within the boundary. I made this work by making another grid and excluding points that were outside the boundary or were inside the boundary by 10 meters or less (that's why there's an `st_buffer(10)` in there).
 
 ```{r, warning=FALSE}
 boundary_coords <- st_coordinates(boundary)
@@ -193,7 +193,7 @@ fit_gam_soap <- gam(
 grid$GAM_Soap <- predict(fit_gam_soap, newdata = grid, type = "response")
 ```
 
-I found this method quite complicated, but the fact that the model has assumptions that line up with reality (zero depth around the edge of the lake) means that it may work quite well in some circumstances. As you'll see shortly, it actually didn't work particularly well for this data set.
+I found this method complicated, but the fact that the model has assumptions that line up with reality (zero depth around the edge of the lake) means that it may work quite well in some circumstances. As you'll see shortly, it didn't work particularly well for this data set.
 
 ### Computing volume
 
@@ -213,7 +213,7 @@ grid %>%
 
 ### Contouring
 
-Another purpose of interpolating bathymetry is to generate a raster or contours to bring in to mapping or visualization software. These can both be done using the [raster](https://cran.r-project.org/package=raster) package, which can create a raster from an evenly-spaced grid with z values. This function needs a data frame with exactly three columns and no geometry column. For contours, you can specify the levels or leave them blank to have them picked for you, and you have to convert them back to sf format (they are produced in sp format). Again for the TIN interpolation, it would look like this:
+Another purpose of interpolating bathymetry is to generate a raster or contours to bring in to mapping software. These can both be done using the [raster](https://cran.r-project.org/package=raster) package, which can create a raster from an evenly-spaced grid with z values. This function needs a data frame with exactly three columns and no geometry column. For contours, you can specify the levels or leave them blank to have them picked for you, and you have to convert them back to sf format (they are produced in sp format). Again for the TIN interpolation, it would look like this:
 
 ```{r, warning=FALSE}
 depth_raster <- grid %>% 
@@ -228,7 +228,7 @@ depth_contours <- depth_raster %>%
 
 ### Plotting
 
-A really good map needs GIS software, but you can get pretty close with [ggplot2](https://ggplot2.tidyverse.org/) and ggspatial (for the scale bar!).
+A really good map needs GIS software, but you can get pretty close with [ggplot2](https://ggplot2.tidyverse.org/) and ggspatial (for the scale bar).
 
 ```{r result-one}
 ggplot(grid) +
@@ -242,7 +242,7 @@ ggplot(grid) +
 
 ### Comparing models
 
-So how do the models stack up!? I don't have a comprehensive evaluation in this post, but if you take a look at them all it's clear that IDW and the soap film smooth have some serious problems: the sampling points are somewhat visible in the IDW raster (which is very much influenced by the high density of border points) and the soap film smooth shorelines are all 1 m deep! The contour lines for the thin plate regression spline looked the best, and the TIN interpolation made the fewest assumptions, although it probably underestimated the depth in the neck of the lake.
+So how do the models stack up!? I don't have a comprehensive evaluation in this post, but if you take a look at them all it's clear that IDW and the soap film smooth have some problems: the sampling points are somewhat visible in the IDW raster (which is very much influenced by the high density of border points) and the soap film smooth shorelines are all 1 m deep. The contour lines for the thin plate regression spline looked the best (but overestimated depth next to the steep northern slope of the lake), and the TIN interpolation made the fewest assumptions, although it probably underestimated the depth in the neck of the lake.
 
 ```{r result-all, include=FALSE}
 method_summary <- grid %>% 
@@ -284,4 +284,4 @@ grid %>%
   labs(x = NULL, y = NULL)
 ```
 
-As anybody who has created bathymetry models would know, every lake is different! And every lake will probably need its own bathymetry methods (especially the  complex ones). I'd like have it be easier to use GRASS and QGIS from inside R, which would open up some better algorithms that might apply more generally (I'm looking at you, RST!).
+As anybody who has created bathymetry models would know, every lake is different! And every lake will probably need its own bathymetry methods (especially the  complex ones). I'd like have it be easier to use GRASS and QGIS from inside R, which would open up some better algorithms that might apply more generally (I'm looking at you, RST).
