@@ -15,7 +15,7 @@ education:
     year: 2011
 email: "dewey@fishandwhistle.net"
 interests:
-- Applied freshwater research
+- Trace metals in lake sediment
 - Environmental data analytics & software development
 - Geoscience, GIS, and data analytics education
 name: Dewey Dunnington

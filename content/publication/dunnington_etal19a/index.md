@@ -1,7 +1,7 @@
 ---
 abstract: ""
 authors: ["admin", "Braden R. B. Gregory", "I. S. Spooner", "Christopher E. White", "Graham A. Gagnon"]
-date: "2019-12-31"
+date: "2019-10-31"
 doi: ""
 featured: false
 image:
@@ -14,7 +14,7 @@ publication_short: ""
 publication_types: ["2"]
 summary: ""
 tags: []
-title: "Evaluating the utility of element normalization methods in aquatic sediments"
+title: "Evaluating the performance of calculated elemental measures in sediment archives"
 url_code: ""
 url_dataset: ""
 url_pdf: ""
