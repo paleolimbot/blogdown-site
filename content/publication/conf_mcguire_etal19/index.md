@@ -9,7 +9,7 @@ image:
   focal_point: ""
   preview_only: false
 projects: []
-publication: "the North American Lake Management Society International Symposium"
+publication: "North American Lake Management Society International Symposium"
 publication_short: ""
 publication_types: ["1"]
 summary: ""
