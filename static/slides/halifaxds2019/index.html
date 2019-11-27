@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>R, the tidyverse, and ggplot2</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dewey W. Dunnington (@paleolimbot)" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="presentation.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: title-slide, middle, center, title-slide
+
+# R, the tidyverse, and ggplot2
+## <div class="figure" style="text-align: center">
+<img src="RStudio_hex.png" style="width:30%; display: inline-block"/><img src="tidyverse_hex.png" style="width:30%; display: inline-block"/><img src="ggplot2.png" style="width:30%; display: inline-block"/>
+</div>
+### Dewey W. Dunnington (<span class="citation">@paleolimbot</span>)
+### Centre for Water Resources Studies / Dalhousie University
+
+---
+
+class: center, middle
+
+&lt;img src="r_logo.png" /&gt;
+
+(A programming language and package ecosystem built for data)
+
+
+
+---
+class: center, middle
+
+&lt;img src="RStudio-Logo-Flat.png" /&gt;
+
+(An IDE for R with support for CSS, HTML, Python, and C/C++)
+
+---
+class: center, middle
+
+&lt;img src="tidyverse.png" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="rstudio_hq.jpg" style="width: 50%;" /&gt;
+
+---
+
+# The Tidyverse
+
+
+```r
+# install.packages("tidyverse")
+library(tidyverse)
+```
+
+```
+## ── Attaching packages ───────────────────────────────────────────────────────────────────────── tidyverse 1.2.1 ──
+```
+
+```
+## ✔ ggplot2 3.2.1     ✔ purrr   0.3.2
+## ✔ tibble  2.1.3     ✔ dplyr   0.8.3
+## ✔ tidyr   1.0.0     ✔ stringr 1.4.0
+## ✔ readr   1.3.1     ✔ forcats 0.4.0
+```
+
+```
+## ── Conflicts ──────────────────────────────────────────────────────────────────────────── tidyverse_conflicts() ──
+## ✖ dplyr::filter() masks stats::filter()
+## ✖ dplyr::lag()    masks stats::lag()
+```
+
+---
+class: center, middle
+
+.pull-left[
+  &lt;img src="dplyr.png" style="width: 90%;" /&gt;
+  (Grammar of data manipulation)
+]
+
+.pull-right[
+  &lt;img src="ggplot2.png" style="width: 90%;" /&gt;
+  (Grammar of graphics)
+]
+
+---
+
+# dplyr
+
+
+```r
+library(electionca)
+results %&gt;% 
+  left_join(ridings, by = "riding") %&gt;% 
+  filter(election_date == "2019-10-21", province == "Nova Scotia") %&gt;% 
+  group_by(party) %&gt;% 
+  summarise(total = sum(votes)) %&gt;% 
+  mutate(percent = total / sum(total) * 100) %&gt;% 
+  arrange(desc(percent)) %&gt;% 
+  head(5)
+```
+
+```
+## # A tibble: 5 x 3
+##   party                         total percent
+##   &lt;chr&gt;                         &lt;dbl&gt;   &lt;dbl&gt;
+## 1 Liberal Party of Canada      219394   41.3 
+## 2 Conservative Party of Canada 136571   25.7 
+## 3 New Democratic Party         100479   18.9 
+## 4 Green Party of Canada         58293   11.0 
+## 5 Independent                    7755    1.46
+```
+
+---
+
+# dplyr
+
+
+```r
+# connect to the NOAA Daily Climate Dataset
+con &lt;- DBI::dbConnect(
+  bigrquery::bigquery(), 
+  project = "bigquery-public-data", 
+  dataset = "ghcn_d",
+  billing = "&lt;project_id&gt;"
+)
+
+# Precipitation for Halifax Airport 2019
+tbl(con, "ghcnd_2019") %&gt;% 
+  filter(id == "CA008202251", is.na(qflag), element == "PRCP") %&gt;% 
+  mutate(
+    prcp_mm = value / 10, 
+    month = month(date)
+  ) %&gt;% 
+  group_by(month) %&gt;% 
+  summarise(monthly_precip = sum(prcp_mm)) %&gt;% 
+  arrange(desc(monthly_precip)) %&gt;% 
+  head(3)
+```
+
+---
+
+# dplyr
+
+    Running job '&lt;project_id&gt;.job_xaXjB92nactfDw0LL6Q3NHTltvC3.US' [/]  2s
+    Complete
+    Billed: 1.01 GB
+    Downloading 3 rows in 1 pages.
+    # Source:     lazy query [?? x 2]                                                                               
+    # Database:   BigQueryConnection
+    # Ordered by: desc(monthly_precip)
+      month monthly_precip
+      &lt;int&gt;          &lt;dbl&gt;
+    1     4           185.
+    2     6           167.
+    3     1           140. 
+
+---
+
+# ggplot2
+
+
+```r
+library(unienrollment)
+income
+```
+
+```
+## # A tibble: 480 x 7
+##     year degree_type program_class  gender income_5yr income_2yr n_students
+##    &lt;dbl&gt; &lt;chr&gt;       &lt;chr&gt;          &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+##  1  2010 Doctoral    Aboriginal an… Femal…      60000      58100         30
+##  2  2010 Doctoral    Agriculture, … Femal…      76800      60200         20
+##  3  2010 Doctoral    Agriculture, … Males       60500      38600         30
+##  4  2010 Doctoral    Agriculture, … Femal…      70100      55900         50
+##  5  2010 Doctoral    Agriculture, … Males       70000      51300         60
+##  6  2010 Doctoral    Architecture,… Femal…      71200      53500        145
+##  7  2010 Doctoral    Architecture,… Males       87100      74700        510
+##  8  2010 Doctoral    Biological an… Femal…      56600      41700        275
+##  9  2010 Doctoral    Biological an… Males       58100      37500        225
+## 10  2010 Doctoral    Business, man… Femal…     105200      96300         60
+## # … with 470 more rows
+```
+
+---
+
+# ggplot2
+
+
+```r
+ggplot(income) +
+  geom_point(aes(x = income_2yr, y = income_5yr))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-4-1.png)&lt;!-- --&gt;
+
+---
+
+# ggplot2
+
+
+```r
+ggplot(income) +
+  geom_point(aes(x = income_2yr, y = income_5yr, colour = gender))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+---
+
+# ggplot2
+
+
+```r
+ggplot(income) +
+  geom_boxplot(aes(x = degree_type, y = income_5yr, colour = gender))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+
+---
+
+# ggplot2
+
+
+```r
+ggplot(income) +
+  geom_boxplot(aes(x = degree_type, y = income_5yr)) +
+  facet_wrap(vars(gender))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+---
+
+# ggplot2
+
+
+```r
+ggplot(income) +
+  geom_boxplot(aes(x = gender, y = income_5yr)) +
+  facet_wrap(vars(degree_type))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+
+---
+
+# dplyr + ggplot2
+
+
+```r
+income_common &lt;- income %&gt;% 
+  mutate(
+    program_class = fct_lump(program_class, n = 5, w = n_students)
+  ) %&gt;% 
+  filter(degree_type != "Associate")
+
+income_common
+```
+
+```
+## # A tibble: 470 x 7
+##     year degree_type program_class  gender income_5yr income_2yr n_students
+##    &lt;dbl&gt; &lt;chr&gt;       &lt;fct&gt;          &lt;chr&gt;       &lt;dbl&gt;      &lt;dbl&gt;      &lt;dbl&gt;
+##  1  2010 Doctoral    Other          Femal…      60000      58100         30
+##  2  2010 Doctoral    Other          Femal…      76800      60200         20
+##  3  2010 Doctoral    Other          Males       60500      38600         30
+##  4  2010 Doctoral    Other          Femal…      70100      55900         50
+##  5  2010 Doctoral    Other          Males       70000      51300         60
+##  6  2010 Doctoral    Other          Femal…      71200      53500        145
+##  7  2010 Doctoral    Other          Males       87100      74700        510
+##  8  2010 Doctoral    Other          Femal…      56600      41700        275
+##  9  2010 Doctoral    Other          Males       58100      37500        225
+## 10  2010 Doctoral    Business, man… Femal…     105200      96300         60
+## # … with 460 more rows
+```
+
+---
+
+# dplyr + ggplot2
+
+
+```r
+ggplot(income_common) +
+  geom_boxplot(aes(x = program_class, y = income_2yr, col = gender)) +
+  facet_wrap(vars(degree_type)) +
+  coord_flip()
+```
+
+![](presentation_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+
+---
+class: center, middle
+
+&lt;img src="r4ds.png" style="width:50%" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="RStudio_hex.png" style="width:30%; display: inline-block"/&gt;
+&lt;img src="tidyverse_hex.png" style="width:30%; display: inline-block"/&gt;
+&lt;img src="ggplot2.png" style="width:30%; display: inline-block"/&gt;
+
+.footer[
+Dewey Dunnington (@paleolimbot) &lt;br/&gt;
+https://fishandwhistle.net/slides/halifaxds2019
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+  </body>
+</html>
