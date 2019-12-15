@@ -1,0 +1,395 @@
+---
+title: Really basic Stan
+author: Dewey Dunnington
+date: '2019-12-15'
+slug: really-basic-stan
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2019-12-15T12:02:18-04:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(rstan)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+
+theme_set(theme_bw())
+
+knitr::opts_chunk$set(fig.path = "")
+```
+
+Ever since I got a primer on Bayesian statistics from [Aaron McNeil](https://twitter.com/ma_macneil) in my *Analysis of Biological Data* course at Dalhousie, I've been Bayesian-curious. As an avid R user, the way to do Bayesian statistics (as far as I can tell) is [Stan](https://mc-stan.org/), "a state-of-the-art platform for statistical modeling and high-performance statistical computation". Other packages like [brms](https://github.com/paul-buerkner/brms) build on Stan for most use-cases; an excellent guide to doing statistics using *brms* is available as the online book [Statistical Rethinking with brms, ggplot2, and the tidyverse](https://bookdown.org/ajkurz/Statistical_Rethinking_recoded/).
+
+Using *brms* is less intuitive (for me) with more complex models. My use-case is physically-based age-depth models, but there comes a point where writing Stan code is more expressive than the equivalent *brms* code, and because Bayesian stats can be complicated to explain to people, expressiveness is key! The rest of this post is the result of my adventures learning how to write Stan code. I'll be using the [tidyverse](https://tidyverse.org/) and [rstan](https://mc-stan.org/rstan/) for the rest of the post.
+
+```{r}
+library(tidyverse)
+library(rstan)
+```
+
+## A Bayesian linear model
+
+(based on the tutorial in the excellent [Stan documentation](https://mc-stan.org/docs/2_21/stan-users-guide/linear-regression.html))
+
+Most of us have been using linear models ever since we learned how to insert a "best fit" line in Excel, which prints a nice equation in the form `y = m * x + b`. Because every point has some error (not *every* point is along the best-fit line), the model is actually more like `y = m * x + b + error`, and indeed, the assumptions that underly frequentist hypothesis testing for linear models assume that the residuals are normally distributed (mean of 0 with a standard deviation). I normally don't use fake data in posts, but here it's useful so that we see if the model is giving us the correct values.
+
+```{r}
+actual_slope <- 4.5
+actual_intercept <- 12
+actual_se <- 20
+
+set.seed(2847)
+linear_data <- tibble(
+  x = 0:99,
+  y = actual_slope * x + actual_intercept +
+    rnorm(100, mean = 0, sd = actual_se)
+)
+
+ggplot(linear_data, aes(x, y)) + 
+  geom_abline(
+    slope = actual_slope, 
+    intercept = actual_intercept,
+    lty = 2, alpha = 0.7
+  ) +
+  geom_point()
+```
+
+Of course, the "normal" way to fit the model (estimate *m* and *b*) is using `lm()`:
+
+```{r}
+lm_fit <- lm(y ~ x, data = linear_data)
+summary(lm_fit)
+```
+
+Using Stan, there are more steps. First, we have to define the model. I usually do this in a character vector, but you can also define it in an RMarkdown chunk or a `.stan` file, where you'll get better RStudio syntax highlighting and autocompletion.
+
+```{r, results="hide"}
+stan_model_def <- "
+data {
+  int n;
+  vector[n] x;
+  vector[n] y;
+}
+
+parameters {
+  real slope;
+  real intercept;
+  real standardError;
+}
+
+model {
+  y ~ normal(slope * x + intercept, standardError);
+}
+"
+
+stan_fit <- stan(
+  model_code = stan_model_def,
+  data = list(
+    n = nrow(linear_data),
+    x = linear_data$x,
+    y = linear_data$y
+  )
+)
+```
+
+```{r}
+stan_fit
+```
+
+(For the rest of this post I'm only going to show the Stan code for clarity, but you should also know that `rstan::extract(stan_fit)` and `rstan::stan_plot(stan_fit)` are useful ways to extract information from the `stan_fit` object.)
+
+The Stan model didn't get any mean estimates for the parameters were closer to the "true" values than the `lm()` version, but it does a way better job at assessing error: the "true" values are all between the 25% and 75% quantiles for the estimated parameters. The `lm()` version doesn't give any of this information (nor can it). All models are wrong, but at least the Stan model has an idea how wrong it actually is.
+
+The above model doesn't actually incorporate the most important feature of Bayesian statistics, which is the incorporation of prior knowledge. This is more important with more non-linear relationships, which need some guidance to converge on a solution. These get defined as distributions for the parameters you are trying to estimate. To specify that the slope should be "somewhere around 5", for example, you could suggest that `slope ~ normal(5, 3)` (normally distributed with a mean of 5 and a standard deviation of 3). In Stan, these are added in the `model` block like so:
+
+```{stan, output.var = "stan_model2"}
+data {
+  int n;
+  vector[n] x;
+  vector[n] y;
+}
+
+parameters {
+  real slope;
+  real intercept;
+  real standardError;
+}
+
+model {
+  intercept ~ normal(10, 5);
+  slope ~ normal(5, 3);
+  
+  y ~ normal(slope * x + intercept, standardError);
+}
+```
+
+```{r, include=FALSE}
+stan_fit <- stan(
+  model_code = stan_model2@model_code,
+  data = list(
+    n = nrow(linear_data),
+    x = linear_data$x,
+    y = linear_data$y
+  )
+)
+```
+
+```{r, echo=FALSE}
+stan_fit
+```
+
+And, magically, Stan gets the slope bang on at 4.5 (the intercept isn't quite as good, but it's still well within the error bounds).
+
+## Really basic Stan
+
+Stan models get defined in 3 main parts: `data`, `parameters`, and  `model`. I like to think of Stan models as R functions that might look something like this:
+
+```{r, eval=FALSE}
+my_stan_model <- function(data) {
+  parameter_values <- sample_priors(parameters)
+  
+  for (i in many_iterations) {
+    log_probability <- evaluate(model, at = parameter_values, using = data)
+    if (is_good_enough(log_probability)) {
+      keep(parameter_values)
+    }
+    
+    parameter_values <- update_parameter_values(parameter_values)
+  }
+  
+  return(best(parameter_values))
+}
+```
+
+Not being a statistician, I imagine I'm missing a lot of nuances here, but in the words of [Greg Wilson](http://teachtogether.tech/), "never hesitate to sacrifice the truth for clarity".
+
+### Data
+
+Let's start with the data, or where we define the inputs. For the linear model, the inputs were `x` and `y`, and because Stan needs to know the length of any of it's inputs before they're declared, we also need the input of `n`, or the number of points.
+
+``` stan
+data {
+  int n;
+  vector[n] x;
+  vector[n] y;
+}
+```
+
+You should include anything in `data` that you can compute in advance, or that you are going to change from model to model. In our case, this includes information about the prior distribution of `slope` and `intercept` (I hard-coded this in the example above, but it will be different when `x` and  `y` change, so it shouldn't be hard-coded).
+
+``` stan
+data {
+  int n;
+  vector[n] x;
+  vector[n] y;
+  real slopeEstimate;
+  real slopeEstimateSigma;
+  real interceptEstimate;
+  real interceptEstimateSigma;
+}
+```
+
+The only thing missing are constraints. Stan lets you specify bounds for the input data, which helps track down errors considerably (also nicely communicates what you intended each variable to represent). You can specify this in angled brackets after the variable type.
+
+``` stan
+data {
+  int<lower=0> n;
+  vector[n] x;
+  vector[n] y;
+  real slopeEstimate;
+  real<lower=0> slopeEstimateSigma;
+  real interceptEstimate;
+  real<lower=0> interceptEstimateSigma;
+}
+```
+
+Make sure to put a semi-colon after each line!
+
+### Parameters
+
+If the `data` are the things that you *do* know, `parameters` are the things that you *don't* know. They get defined in the same way as the data. For the linear model, we don't know the `slope`, the `intercept`, or the standard error of the residuals. Just like the `data`, they can have constraints as well (and need semi-colons after each line).
+
+``` stan
+parameters {
+  real slope;
+  real intercept;
+  real<lower=0> standardError;
+}
+```
+
+### Model
+
+The `model` is where the magic happens! I think of this as a place where you can write things that are true, including prior probabilities and the relationships model itself.
+
+``` stan
+model {
+  intercept ~ normal(interceptEstimate, interceptEstimateSigma);
+  slope ~ normal(slopeEstimate, slopeEstimateSigma);
+  
+  y ~ normal(slope * x + intercept, standardError);
+}
+```
+
+### Putting it all together
+
+```{stan, output.var = "stan_model3"}
+data {
+  int<lower=0> n;
+  vector[n] x;
+  vector[n] y;
+  real slopeEstimate;
+  real<lower=0> slopeEstimateSigma;
+  real interceptEstimate;
+  real<lower=0> interceptEstimateSigma;
+}
+
+parameters {
+  real slope;
+  real intercept;
+  real<lower=0> standardError;
+}
+
+model {
+  intercept ~ normal(interceptEstimate, interceptEstimateSigma);
+  slope ~ normal(slopeEstimate, slopeEstimateSigma);
+  
+  y ~ normal(slope * x + intercept, standardError);
+}
+```
+
+```{r, include=FALSE}
+stan_fit <- stan(
+  model_code = stan_model3@model_code,
+  data = list(
+    n = nrow(linear_data),
+    x = linear_data$x,
+    y = linear_data$y,
+    slopeEstimate = 5,
+    slopeEstimateSigma = 3,
+    interceptEstimate = 10,
+    interceptEstimateSigma = 3
+  )
+)
+```
+
+Because we've added new `data` definitions, we need to add these to the `data` that we pass to `stan()`.
+
+```{r, eval=FALSE}
+stan_fit <- stan(
+  ...,
+  data = list(
+    n = nrow(linear_data),
+    x = linear_data$x,
+    y = linear_data$y,
+    slopeEstimate = 5,
+    slopeEstimateSigma = 3,
+    interceptEstimate = 10,
+    interceptEstimateSigma = 3
+  )
+)
+
+stan_fit
+```
+
+```{r, echo=FALSE}
+stan_fit
+```
+
+## A more complex example
+
+Bayesian linear models are well-handled in the R universe (the above example could be condensed to  `brms::brm(y ~ x, data = linear_data)`), but more complex or discipline-specific models probably don't have a well-summarised equivalent.
+
+As an example, I'll use radiometric dating. You might remember that radioactive elements decay exponentially, and can be modeled by the formula
+
+``` r
+amount <- function(t) initialAmount * exp(-decayConstant * t)
+```
+
+I deal in recent lake sediments, whose ages are usually estimated using measurements of ^210^Pb (which is radioactive). Usually we use a more complex model, but the earliest model (the CIC model) modeled the age of each slice in exactly this way, with the slight complication that there's some residual (background) ^210^Pb hanging around in all samples. We can model a fake core that uses exactly this principle using the [pb210 package](https://github.com/paleolimbot/pb210).
+
+```{r}
+known_background <- 15
+known_background_error <- 5
+
+# remotes::install_github("paleolimbot/pb210")
+library(pb210) 
+fake_core <- pb210_simulate_accumulation() %>%
+  pb210_simulate_core(rep(1, 20)) %>%
+  mutate(
+    activity = activity + 
+      rnorm(20, mean = known_background, sd = known_background_error)
+  ) %>% 
+  pb210_simulate_counting(count_time = lubridate::dhours(12)) %>% 
+  select(depth, age, activity_estimate, activity_se)
+
+fake_core
+```
+
+The Stan model for this is a bit more complicated, because we're trying to estimate more parameters (notably, the age of each slice). The model does very poorly if we don't give it *some* idea of what the ages of each slice are, and it turns out we really *do* know some things about how fast sediment could possibly accumulate, so it's not unrealistic to include it in the model. Something else I do here is loop within the `model` bit...I think it's possible to use vectorized notation (like for the linear model), but I think it's good to illustrate that you can loop here to capture more complex "truths".
+
+```{stan, output.var = "stan_cic"}
+data {
+  int<lower=0> nSamples;
+  real<lower=0> decayConstant;
+  vector<lower=0>[nSamples] activity;
+  vector<lower=0>[nSamples] sigmaActivity;
+  vector<lower=0>[nSamples] ageEstimate;
+  vector<lower=0>[nSamples] ageEstimateSigma;
+  real backgroundActivityEstimate;
+  real<lower=0> backgroundActivitySigma;
+}
+
+parameters {
+  vector<lower=0>[nSamples] age;
+  real<lower=0> initialActivity;
+  real backgroundActivity;
+}
+
+model {
+  initialActivity ~ normal(activity[1], sigmaActivity[1]);
+  backgroundActivity ~ normal(backgroundActivityEstimate, backgroundActivitySigma);
+  
+  for (i in 1:nSamples)  {
+    activity[i] ~ normal(
+      backgroundActivity + initialActivity * exp(-decayConstant * age[i]),
+      sigmaActivity[i]
+    );
+    age[i] ~ normal(ageEstimate[i], ageEstimateSigma[i]);
+  }
+}
+```
+
+```{r, include=FALSE}
+stan_fit <- stan(
+  model_code = stan_cic@model_code,
+  data = list(
+    nSamples = nrow(fake_core),
+    decayConstant = drop_errors(pb210_decay_constant()),
+    activity = fake_core$activity_estimate,
+    sigmaActivity = fake_core$activity_se,
+    ageEstimate = 1:20  * 10,
+    ageEstimateSigma = 1:20  * 10 * 2,
+    backgroundActivityEstimate = 0,
+    backgroundActivitySigma = 20
+  ),
+  
+  iter = 5000
+)
+```
+
+```{r}
+stan_fit
+```
+
+Lo and behold, we get estimates! I used age priors of 10 years per slice (with a sd of age times 2...fairly uninformative but realistic). The model does poorly in the lower sediment intervals, but correctly has high error there as well. I think it's amazing that it estimated the background so well! To do better, it would probably have to incorporate the background error somehow, but that is a battle for another day.
