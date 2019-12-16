@@ -176,7 +176,7 @@ Not being a statistician, I imagine I'm missing a lot of nuances here, but in th
 
 ### Data
 
-Let's start with the data, or where we define the inputs. For the linear model, the inputs were `x` and `y`, and because Stan needs to know the length of any of it's inputs before they're declared, we also need the input of `n`, or the number of points.
+Let's start with the data, or where we define the inputs. For the linear model, the inputs were `x` and `y`, and because Stan needs to know the length of any of its inputs before they're declared, we also need the input of `n`, or the number of points.
 
 ``` stan
 data {

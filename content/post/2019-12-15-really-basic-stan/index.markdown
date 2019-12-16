@@ -142,7 +142,7 @@ stan_fit
 ## standardError  2179    1
 ## lp__           1571    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Sun Dec 15 17:29:45 2019.
+## Samples were drawn using NUTS(diag_e) at Sun Dec 15 20:41:50 2019.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).
@@ -195,7 +195,7 @@ model {
 ## standardError  2537    1
 ## lp__           1625    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Sun Dec 15 17:30:24 2019.
+## Samples were drawn using NUTS(diag_e) at Sun Dec 15 20:42:31 2019.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).
@@ -229,7 +229,7 @@ Not being a statistician, I imagine I'm missing a lot of nuances here, but in th
 
 ### Data
 
-Let's start with the data, or where we define the inputs. For the linear model, the inputs were `x` and `y`, and because Stan needs to know the length of any of it's inputs before they're declared, we also need the input of `n`, or the number of points.
+Let's start with the data, or where we define the inputs. For the linear model, the inputs were `x` and `y`, and because Stan needs to know the length of any of its inputs before they're declared, we also need the input of `n`, or the number of points.
 
 ``` stan
 data {
@@ -361,7 +361,7 @@ stan_fit
 ## standardError  2560    1
 ## lp__           1831    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Sun Dec 15 17:31:00 2019.
+## Samples were drawn using NUTS(diag_e) at Sun Dec 15 20:43:08 2019.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).
@@ -520,7 +520,7 @@ stan_fit
 ## backgroundActivity   14.27  3799    1
 ## lp__                 85.94  3768    1
 ## 
-## Samples were drawn using NUTS(diag_e) at Sun Dec 15 17:31:37 2019.
+## Samples were drawn using NUTS(diag_e) at Sun Dec 15 20:43:48 2019.
 ## For each parameter, n_eff is a crude measure of effective sample size,
 ## and Rhat is the potential scale reduction factor on split chains (at 
 ## convergence, Rhat=1).
