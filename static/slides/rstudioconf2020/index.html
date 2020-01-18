@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Best practices for programming with ggplot2</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dewey Dunnington (@paleolimbot)" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Best practices for programming with ggplot2
+## <img src="images/ggplot2.png" style="width: 200px" />
+### Dewey Dunnington (<span class="citation">@paleolimbot</span>)
+
+---
+
+
+
+
+
+```r
+library(ggplot2)
+ggplot(mpg) +
+  geom_point(aes(displ, hwy, colour = class)) +
+  facet_wrap(vars(manufacturer))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-1-1.png)&lt;!-- --&gt;
+
+---
+class: center, middle, inverse
+
+# Using ggplot2 in Shiny
+
+---
+
+&lt;!-- doesn't work in the demo but works in other browsers --&gt;
+&lt;iframe class="shinyapp" src="https://paleolimbot.shinyapps.io/ggpkg_demo/"&gt;&lt;/iframe&gt;
+
+---
+
+# Programming with ggplot2
+
+Shiny `selectInput()` values are character vectors:
+
+
+```r
+colour_var &lt;- "class"
+facet_var &lt;- "manufacturer"
+```
+
+Mappings and facet specifications use non-standard evaluation:
+
+
+```r
+ggplot(mpg) +
+  geom_point(aes(displ, hwy, colour = class)) +
+  facet_wrap(vars(manufacturer))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-3-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+Shiny `selectInput()` values are character vectors:
+
+
+```r
+colour_var &lt;- "class"
+facet_var &lt;- "manufacturer"
+```
+
+Mappings and facet specifications use non-standard evaluation:
+
+
+```r
+ggplot(mpg) +
+  geom_point(aes(displ, hwy, colour = !!sym(colour_var))) +
+  facet_wrap(vars(!!sym(facet_var)))
+```
+
+![](presentation_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!sym(colour_var))) +
+    facet_wrap(vars(!!sym(facet_var)))
+}
+
+plot_mpg_string("class", "manufacturer")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-6-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!sym(colour_var))) +
+    facet_wrap(vars(!!sym(facet_var)))
+}
+
+plot_mpg_string("&lt;none&gt;", "manufacturer")
+```
+
+```
+## Error in FUN(X[[i]], ...): object '&lt;none&gt;' not found
+```
+
+![](presentation_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  colour_mapping &lt;- sym(colour_var)
+  
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet_wrap(vars(!!sym(facet_var)))
+}
+
+plot_mpg_string("&lt;none&gt;", "manufacturer")
+```
+
+```
+## Error in FUN(X[[i]], ...): object '&lt;none&gt;' not found
+```
+
+![](presentation_files/figure-html/unnamed-chunk-8-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet_wrap(vars(!!sym(facet_var)))
+}
+
+plot_mpg_string("&lt;none&gt;", "manufacturer")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-9-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet_wrap(vars(!!sym(facet_var)))
+}
+
+plot_mpg_string("&lt;none&gt;", "&lt;none&gt;")
+```
+
+```
+## Error: At least one layer must contain all faceting variables: `&lt;none&gt;`.
+## * Plot is missing `&lt;none&gt;`
+## * Layer 1 is missing `&lt;none&gt;`
+```
+
+![](presentation_files/figure-html/unnamed-chunk-10-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  facet &lt;- facet_wrap(vars(!!sym(facet_var)))
+  
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet
+}
+
+plot_mpg_string("&lt;none&gt;", "&lt;none&gt;")
+```
+
+```
+## Error: At least one layer must contain all faceting variables: `&lt;none&gt;`.
+## * Plot is missing `&lt;none&gt;`
+## * Layer 1 is missing `&lt;none&gt;`
+```
+
+![](presentation_files/figure-html/unnamed-chunk-11-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+
+```r
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  if (facet_var != "&lt;none&gt;") {
+    facet &lt;- facet_wrap(vars(!!sym(facet_var)))
+  } else {
+    facet &lt;- NULL
+  }
+  
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet
+}
+```
+
+---
+
+
+```r
+plot_mpg_string("&lt;none&gt;", "&lt;none&gt;")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-13-1.png)&lt;!-- --&gt;
+
+---
+
+# Programming with ggplot2
+
+`aes(aesthetic = NULL)` is identical to `aes()`
+
+- Use to conditionally map a variable with minimal repeated code.
+- Use `!!sym("column name as string")` to convert a string to an expression that can be used within `aes()`.
+
+`ggplot() + NULL` is identical to `ggplot()`
+
+- Use to conditionally add a layer/facet/scale to a plot
+
+`ggplot() + item1 + item2` is identical to `ggplot() + list(item1, item2)`
+
+- Use to conditinally add more than one item to a plot
+
+If you need more than one `ggplot()` call in a function, it's a good indication that you need more than one function.
+
+---
+class: center, middle, inverse
+
+# Using ggplot2 in packages
+
+---
+
+# Introducing...the {plotmpg} package!
+
+
+
+
+
+```r
+library(plotmpg)
+plot_mpg_string("class", "manufacturer")
+```
+
+![](presentation_files/figure-html/unnamed-chunk-15-1.png)&lt;!-- --&gt;
+
+---
+
+# Using ggplot2 in packages
+
+Functions in a package will be used by more than just you:
+
+- Export a function that returns data in a form suitable for use in ggplot2 in addition to (or in place of!) a plot function
+
+Explicit namespacing (no `library()` calls):
+
+- Use roxygen `#' @importFrom ggplot2 &lt;function name&gt;` or explicit namespacing (e.g., `ggplot2::&lt;function_name&gt;()`)
+- Datasets require explicit namespacing (e.g., `ggplot2::mpg`)
+- Infix functions require importing (e.g., `#' @importFrom ggplot2 %+replace%` or assignment
+
+``` r
+`%+replace%` &lt;- ggplot2::`%+replace%`
+```
+
+R CMD check: no undefined variables:
+
+- Use the `.data` pronoun and `#' @importFrom rlang .data` (e.g., `aes(.data$displ, .data$hwy)`))
+
+---
+
+# Using ggplot2 in packages: namespacing
+
+
+```r
+#'
+#'
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  if (facet_var != "&lt;none&gt;") {
+    facet &lt;- facet_wrap(vars(!!sym(facet_var)))
+  } else {
+    facet &lt;- NULL
+  }
+  
+  ggplot(mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet
+}
+```
+
+---
+
+# Using ggplot2 in packages: namespacing
+
+
+```r
+#' @importFrom ggplot2 ggplot aes vars facet_wrap geom_point labs
+#' @importFrom rlang sym
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  if (facet_var != "&lt;none&gt;") {
+    facet &lt;- facet_wrap(vars(!!sym(facet_var)))
+  } else {
+    facet &lt;- NULL
+  }
+  
+  ggplot(ggplot2::mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet
+}
+```
+
+---
+
+# Using ggplot2 in packages: undefined variables
+
+```
+── R CMD check results ──────────── plotmpg 0.0.0.9000 ────
+Duration: 25.2s
+
+&gt; checking R code for possible problems ... NOTE
+  plot_mpg_string: no visible binding for global variable ‘displ’
+  plot_mpg_string: no visible binding for global variable ‘hwy’
+  Undefined global functions or variables:
+    displ hwy
+
+0 errors ✓ | 0 warnings ✓ | 1 note x
+```
+
+---
+
+# Using ggplot2 in packages: undefined variables
+
+
+```r
+#' @importFrom ggplot2 ggplot aes vars facet_wrap geom_point labs
+#' @importFrom rlang sym
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  if (facet_var != "&lt;none&gt;") {
+    facet &lt;- facet_wrap(vars(!!sym(facet_var)))
+  } else {
+    facet &lt;- NULL
+  }
+  
+  ggplot(ggplot2::mpg) +
+    geom_point(aes(displ, hwy, colour = !!colour_mapping)) +
+    facet
+}
+```
+
+---
+
+# Using ggplot2 in packages: undefined variables
+
+
+```r
+#' @importFrom ggplot2 ggplot aes vars facet_wrap geom_point labs
+#' @importFrom rlang sym .data
+plot_mpg_string &lt;- function(colour_var, facet_var) {
+  if (colour_var != "&lt;none&gt;") {
+    colour_mapping &lt;- sym(colour_var)
+  } else {
+    colour_mapping &lt;- NULL
+  }
+  
+  if (facet_var != "&lt;none&gt;") {
+    facet &lt;- facet_wrap(vars(!!sym(facet_var)))
+  } else {
+    facet &lt;- NULL
+  }
+  
+  ggplot(ggplot2::mpg) +
+    geom_point(aes(.data$displ, .data$hwy, colour = !!colour_mapping)) +
+    facet
+}
+```
+
+---
+
+# Using ggplot2 in packages: undefined variables
+
+```
+── R CMD check results ──────────── plotmpg 0.0.0.9000 ────
+Duration: 26.8s
+
+0 errors ✓ | 0 warnings ✓ | 0 notes ✓
+```
+
+---
+
+# Using ggplot2 in packages: testing
+
+Set up testing, install [vdiffr](http://vdiffr.r-lib.org/):
+
+``` r
+# install.packages("vdiffr")
+usethis::use_test("plot-mpg-string")
+usethis::use_package("vdiffr", "Suggests")
+```
+
+``` r
+# currently, vdiffr requires a context at the top of each file
+context("test-plot-mpg-string")
+
+test_that("plot_mpg_string() works", {
+  vdiffr::expect_doppelganger(
+    "plot_mpg_string(), defaults",
+    plot_mpg_string()
+  )
+})
+```
+
+---
+
+# Using ggplot2 in packages: testing
+
+``` r
+vdiffr::manage_cases()
+## Running testthat to collect visual cases
+## 
+##   N = New visual case
+##   X = Failed doppelganger
+##   o = Successful doppelganger
+## 
+## N
+## Loading required package: shiny
+## 
+## Listening on http://127.0.0.1:4164
+```
+
+---
+
+# Using ggplot2 in packages: testing
+
+![vdiffr shiny app](images/vdiffr-shiny.png)
+
+---
+class: center, middle
+
+# Best practices for programming with ggplot2
+
+&lt;img src="images/ggplot2.png" style="width: 200px" /&gt;
+
+Slides: [fishandwhistle.net/slides/rstudioconf2020](https://fishandwhistle.net/slides/rstudioconf2020)
+
+Code: [github.com/paleolimbot/rstudioconf2020](https://github.com/paleolimbot/rstudioconf2020)
+
+@paleolimbot on [Twitter](https://twitter.com/paleolimbot) and [GitHub](https://github.com/paleolimbot)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
