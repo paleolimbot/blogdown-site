@@ -13,7 +13,7 @@
 class: center, middle, title-slide
 
 # Best practices for programming with ggplot2
-## <img src="images/ggplot2.png" style="width: 200px" />
+## <img src="images/ggplot2.png" style="width: 400px" />
 ### Dewey Dunnington (<span class="citation">@paleolimbot</span>)
 
 ---
@@ -32,16 +32,6 @@ class: center, middle
 ![ggplot2 in package vignette](images/vignette.png)
 
 (vignette at [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/dev/articles/ggplot2-in-packages.html))
-
----
-class: center, middle, inverse
-
-# Programming with ggplot2
-
----
-
-&lt;!-- doesn't work in the demo but works in other browsers --&gt;
-&lt;iframe class="shinyapp" src="https://paleolimbot.shinyapps.io/ggpkg_demo/"&gt;&lt;/iframe&gt;
 
 ---
 
@@ -121,7 +111,7 @@ Mappings and facet specifications use tidy evaluation:
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   ggplot(mpg) +
     geom_point(aes(displ, hwy, colour = .data[[colour_var]])) +
     facet_wrap(vars(.data[[facet_var]]))
@@ -145,7 +135,7 @@ plot_mpg("class", "drv")
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   ggplot(mpg) +
     geom_point(aes(displ, hwy, colour = .data[[colour_var]])) +
     facet_wrap(vars(.data[[facet_var]]))
@@ -166,7 +156,7 @@ plot_mpg(NULL, "drv")
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   ggplot(mpg) +
@@ -189,7 +179,7 @@ plot_mpg(NULL, "drv")
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -213,7 +203,7 @@ plot_mpg(NULL, "drv")
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -240,7 +230,7 @@ plot_mpg(NULL, NULL)
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -269,7 +259,7 @@ plot_mpg(NULL, NULL)
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -348,7 +338,9 @@ class: center, middle, inverse
 
 
 ```r
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+#' 
+#'
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -374,8 +366,8 @@ plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
 
 ```r
 #' @importFrom ggplot2 ggplot aes vars facet_wrap geom_point labs
-#' @importFrom rlang .data
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+#'
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -403,6 +395,7 @@ plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
 Duration: 25.2s
 
 &gt; checking R code for possible problems ... NOTE
+  plot_mpg: no visible binding for global variable ‘.data’
   plot_mpg: no visible binding for global variable ‘displ’
   plot_mpg: no visible binding for global variable ‘hwy’
   Undefined global functions or variables:
@@ -418,8 +411,8 @@ Duration: 25.2s
 
 ```r
 #' @importFrom ggplot2 ggplot aes vars facet_wrap geom_point labs
-#' @importFrom rlang .data
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+#'
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(displ, hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -446,7 +439,7 @@ plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
 ```r
 #' @importFrom ggplot2 ggplot aes vars facet_wrap geom_point labs
 #' @importFrom rlang .data
-plot_mpg &lt;- function(colour_var = "class", facet_var = "drv") {
+plot_mpg &lt;- function(colour_var, facet_var) {
   mapping &lt;- aes(.data$displ, .data$hwy, colour = .data[[colour_var]])
   
   if (is.null(colour_var)) {
@@ -527,7 +520,7 @@ vdiffr::manage_cases()
 ---
 class: center, middle, inverse
 
-# Namespace using &lt;br/&gt;&lt;br/&gt; `ggplot::function()` &lt;br/&gt;&lt;br/&gt; and/or &lt;br/&gt;&lt;br/&gt; `#' @importFrom ggplot2 function`
+# Namespace using &lt;br/&gt;&lt;br/&gt; `ggplot2::function()` &lt;br/&gt;&lt;br/&gt; and/or &lt;br/&gt;&lt;br/&gt; `#' @importFrom ggplot2 function`
 
 ---
 class: center, middle, inverse
@@ -541,10 +534,17 @@ class: center, middle, inverse
 
 ---
 
-Data from the [electionca](https://paleolimbot.github.io/electionca) package/Library of Parliament
 
-&lt;!-- doesn't work in the demo but works in other browsers --&gt;
-&lt;iframe class="shinyapp" src="https://paleolimbot.shinyapps.io/electionca_demo/"&gt;&lt;/iframe&gt;
+```r
+library(electionca) # https://paleolimbot.github.io/electionca
+plot_votes(1867:2019, position = "fill") +
+  guides(
+    x = guide_axis(check.overlap = TRUE),
+    fill = guide_legend(ncol = 2)
+  )
+```
+
+![](presentation_files/figure-html/unnamed-chunk-25-1.png)&lt;!-- --&gt;
 
 ---
 class: center, middle
