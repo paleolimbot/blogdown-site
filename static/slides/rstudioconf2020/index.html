@@ -31,7 +31,7 @@ class: center, middle
 
 ![ggplot2 in package vignette](images/vignette.png)
 
-(vignette at [ggplot2.tidyverse.org](https://ggplot2.tidyverse.org/dev/articles/ggplot2-in-packages.html))
+(vignette at [ggplot2.tidyverse.org/dev](https://ggplot2.tidyverse.org/dev/articles/ggplot2-in-packages.html))
 
 ---
 
@@ -74,6 +74,8 @@ ggplot(mpg) +
   facet_wrap(vars(drv))
 ```
 
+![](presentation_files/figure-html/unnamed-chunk-5-1.png)&lt;!-- --&gt;
+
 ---
 
 # Programming with ggplot2
@@ -92,6 +94,8 @@ ggplot(mpg) +
   geom_point(aes(displ, hwy, colour = .data[[colour_var]])) +
   facet_wrap(vars(.data[[facet_var]]))
 ```
+
+![](presentation_files/figure-html/unnamed-chunk-7-1.png)&lt;!-- --&gt;
 
 ---
 
@@ -414,7 +418,7 @@ Duration: 25.2s
   plot_mpg: no visible binding for global variable ‘displ’
   plot_mpg: no visible binding for global variable ‘hwy’
   Undefined global functions or variables:
-    displ hwy
+    .data displ hwy
 
 0 errors ✓ | 0 warnings ✓ | 1 note x
 ```
