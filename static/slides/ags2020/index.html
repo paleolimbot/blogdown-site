@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>The Strativerse: an interactive collection of time-stratigraphic records of environmental change</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dewey W. Dunnington (@paleolimbot)" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="presentation.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: title-slide, middle, title-slide
+
+# The Strativerse: an interactive collection of time-stratigraphic records of environmental change
+## <br/>
+### Dewey W. Dunnington (<span class="citation">@paleolimbot</span>)
+### Centre for Water Resources Studies<br/>Dalhousie University
+
+---
+
+class: center, middle, inverse
+
+
+
+# This is a story about your data
+
+---
+class: center, middle
+
+&lt;img src="1-scholar.png" width="770" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="2-zotero.png" width="223" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="3-zotero-screen.png" width="872" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="3a-strat-map.png" width="639" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="4-strat-unnamed.png" width="751" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle
+
+&lt;img src="5-strat-search.png" width="656" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle
+
+# [The Strativerse](https://strativerse.org/)
+
+---
+class: center, middle, inverse
+
+# This is a story about your data
+
+---
+class: center, middle, inverse
+
+# What are the objects?
+
+# How are they connected?
+
+---
+
+# What are the objects?
+
+.pull-left[
+
+### The "Publication"
+
+A document, presentation, or resource that contains measurements from a **record**
+
+### The "Record"
+
+A core, section, or series of samples that collectively represent change through time
+
+]
+
+.pull-right[
+
+### The "Parameter"
+
+A bin for measurements from a **record** that can be compared with eachother
+
+### The "Feature"
+
+From whence a **record** came (lake)
+
+]
+
+---
+class: center, middle
+
+## Records are referred to by **publications** &lt;br/&gt;&lt;br/&gt; 
+
+## Records have **parameters** measured on them &lt;br/&gt;&lt;br/&gt; 
+
+## Records come from exactly one **feature** &lt;br/&gt;&lt;br/&gt; 
+
+---
+class: center, middle, inverse
+
+# How do you encode objects and connections?
+
+---
+class: center, middle, inverse
+
+# How do you encode objects and connections?
+
+## Is it readable?
+
+## Is it easy to edit?
+
+## Can anybody look at it?
+
+## Will all these things be true in 10 years?
+
+---
+class: center, middle
+
+.figure-dal[
+&lt;img src="6a-excel.png" width="279" style="display: block; margin: auto;" /&gt;&lt;img src="6b-access.jpg" width="524" style="display: block; margin: auto;" /&gt;&lt;img src="6c-postgres.jpeg" width="349" style="display: block; margin: auto;" /&gt;&lt;img src="6d-sqlite.png" width="1257" style="display: block; margin: auto;" /&gt;
+]
+
+---
+class: center, middle
+
+# (Structured) Plain text is king!
+
+## CSV, TSV, YAML, TOML, Markdown
+
+## (XML, HTML, JSON)
+
+---
+
+``` yaml
+title: Unnamed Pond
+date: '1982-12-31'
+date_collected_earliest: ''
+record_type: core
+medium: lake_sediment
+feature: '468'
+description: ''
+parameters:
+  - Cs/137
+  - Pb/210
+  - LOI
+  - Pb/total
+  - Cu/total
+  - V/total
+  - Zn/total
+publications:
+  - norton_etal92
+  - davis_etal94
+  - kahl_etal84
+  - hanson_etal82
+  - davis_etal84
+```
+
+---
+class: center, middle
+
+&lt;img src="7-yaml-files.png" width="675" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle, inverse
+
+# How do you communicate your collection?
+
+---
+class: center, middle
+
+.figure-dal[
+YAML/Markdown to static HTML
+
+&lt;img src="8a-hugo.svg" style="display: block; margin: auto;" /&gt;
+
+&lt;https://gohugo.io/&gt;
+]
+
+.figure-dal[
+Free/low-cost hosting of static HTML files
+
+&lt;img src="8b-netlify.jpg" width="244" style="display: block; margin: auto;" /&gt;
+
+&lt;https://www.netlify.com/&gt;
+]
+
+---
+
+# Acknowledgements
+
+Funding from NSERC (CGS-D), industrial partners of the Centre for Water Resources Studies.
+
+&lt;!-- water studies/dal logos --&gt;
+.figure-dal[
+&lt;img src="logos/water-studies.png" width="683" style="display: block; margin: auto;" /&gt;&lt;img src="logos/dalhousie.png" width="403" style="display: block; margin: auto;" /&gt;
+]
+
+&lt;!-- partner logos ---&gt;
+
+.figure-partner[
+&lt;img src="logos/nserc.png" width="407" style="display: block; margin: auto;" /&gt;&lt;img src="logos/halifax-water.png" width="105" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbrm-water-utility.png" width="255" style="display: block; margin: auto;" /&gt;&lt;img src="logos/moncton.png" width="114" style="display: block; margin: auto;" /&gt;&lt;img src="logos/agat.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/mantech.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbcl.png" width="275" style="display: block; margin: auto;" /&gt;&lt;img src="logos/luminultra.png" width="301" style="display: block; margin: auto;" /&gt;&lt;img src="logos/aquisense.png" width="254" style="display: block; margin: auto;" /&gt;
+]
+
+.footnote[
+Slides created using [xaringan](https://github.com/yihui/xaringan), [remark.js](https://remarkjs.com), [knitr](http://yihui.name/knitr), and [R Markdown](https://rmarkdown.rstudio.com).
+]
+
+
+
+
+---
+class: center
+
+# Questions?
+
+&lt;img src="0-strat-logo-src.svg" width="30%" style="display: block; margin: auto;" /&gt;
+
+These slides: &lt;https://fishandwhistle.net/slides/ags2020&gt;
+
+The Strativerse: &lt;https://strativerse.org/&gt;
+
+GitHub Source: &lt;https://github.com/paleolimbot/strativerse-hugo/&gt;
+
+@paleolimbot on [Twitter](https://twitter.com/paleolimbot) and [GitHub](https://github.com/paleolimbot)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+  </body>
+</html>
