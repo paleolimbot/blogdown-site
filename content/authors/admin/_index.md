@@ -15,7 +15,7 @@ education:
     year: 2011
 email: "dewey@fishandwhistle.net"
 interests:
-- Trace metals in lake sediment
+- Metals in the environment
 - Environmental data analytics & software development
 - Geoscience, GIS, and data analytics education
 name: Dewey Dunnington
@@ -54,4 +54,4 @@ user_groups:
 - Visitors
 ---
 
-Dewey Dunnington is an environmental researcher, programmer, and educator based in Halifax, Nova Scotia. Dewey’s environmental research investigates the mechanisms that control toxic metals in lakes, while his programming has led him to develop mobile applications, web apps, and R packages, most recently as the [ggplot2](https://ggplot2.tidyverse.org/) summer intern with [RStudio](https://rstudio.com/). He has developed and taught many courses on R programming, Python programming, and GIS, and is a [RStudio-certified tidyverse instructor](https://education.rstudio.com/trainers). He is currently pursuing his Ph.D. in the [Centre for Water Resources Studies](http://waterstudies.ca/) at Dalhousie University.
+Dewey Dunnington (M.Sc., P.Geo.) is an environmental researcher, programmer, and educator based in Halifax, Nova Scotia. Dewey’s environmental research investigates the mechanisms that control toxic metals in lakes, while his programming has led him to develop mobile applications, web apps, and R packages, most recently as the [ggplot2](https://ggplot2.tidyverse.org/) summer intern with [RStudio](https://rstudio.com/). He has developed and taught many courses on R programming, Python programming, and GIS, and is a [RStudio-certified tidyverse instructor](https://education.rstudio.com/trainers). He is currently pursuing his Ph.D. in the [Centre for Water Resources Studies](http://waterstudies.ca/) at Dalhousie University.
