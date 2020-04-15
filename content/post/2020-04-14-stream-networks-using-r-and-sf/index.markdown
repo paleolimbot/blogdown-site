@@ -27,7 +27,7 @@ library(tidyverse)
 library(sf)
 ```
 
-The data I'm using is from Nova Scotia Environment/Nova Scotia Department of Natural Resources' excellent collection of geographic information (the [geospatial data directory](https://nsgi.novascotia.ca/gdd/). Included is a small subset of the water features (`lakes`) and hydrographic network (`rivers`) near [Lake Major](https://www.openstreetmap.org/#map=13/44.7838/-63.5046).
+The data I'm using is from Nova Scotia Environment/Nova Scotia Department of Natural Resources' excellent collection of geographic information (the [geospatial data directory](https://nsgi.novascotia.ca/gdd/)). Included is a small subset of the water features (`lakes`) and hydrographic network (`rivers`) near [Lake Major](https://www.openstreetmap.org/#map=13/44.7838/-63.5046).
 
 
 ```r
