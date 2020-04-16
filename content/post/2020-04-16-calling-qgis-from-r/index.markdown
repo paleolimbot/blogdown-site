@@ -1,0 +1,367 @@
+---
+title: Calling QGIS3 from R
+author: Dewey Dunnington
+date: '2020-04-16'
+slug: calling-qgis-from-r
+categories: []
+tags: []
+subtitle: ''
+summary: ''
+authors: []
+lastmod: '2020-04-16T10:03:13-03:00'
+featured: no
+image:
+  caption: ''
+  focal_point: ''
+  preview_only: no
+projects: []
+---
+
+
+
+If you can't tell from my [last post](/post/2020/stream-networks-using-r-and-sf/), I'm trying to delineate watersheds for about 650 lakes. It's not possible (er, I am unwilling) to do this by hand, so I need a way to do this programmatically. R is my weapon of choice, but unfortunately the watershed delineation tools are based in [GRASS](https://grass.osgeo.org/) and [SAGA](http://www.saga-gis.org). It's possible to run GRASS and SAGA directly (via [rgrass7](https://cran.r-project.org/package=rgrass7), and [RSAGA](https://cran.r-project.org/package=RSAGA)), but [QGIS](https://qgis.org/) makes installing these a bit easier, plus the user interface makes trying out the algorithms interactively relatively easy. [RQGIS](https://github.com/r-spatial/RQGIS) only supports QGIS2, and [RQGIS3](https://github.com/r-spatial/RQGIS) has a stark warning for those on UNIX-based OSes (me!) that RQGIS3 will crash your terminal.
+
+Running QGIS3 processing algorithms in Python isn't bad. On Linux this is especially straightforward, since the QGIS libraries are installed to the system `python3`. On MacOS, you have to set a few environment variables. I'll use the `"native:filedownloader"` algorithm as an example, since it only has two arguments. To find the algorithm identifier, you'll need to hover over the name in the Processing toolbox (in the GUI):
+
+![The QGIS Processing Toolbox](alg-where.png)
+
+![...does anybody else feel that there could be a better place to put this?](alg-id.png)
+
+To get a handle on how the input parameters look to Python, you'll have to run the algorithm once in the GUI. The window might get hidden when the command ends, but it should still be there behind the main window! At the top there should be a repl of a Python dictionary with the input parameters that were used:
+
+![Algorithm input parameters](alg-params.png)
+
+There's pretty much zero rhyme or reason to the parameter names, so you'll probably have to do this for every processing function you need.
+
+Now we need some Python code to (1) load QGIS, (2) load the processing plugin, and (3) call the algorithm with the right parameters. Running the algorithm is very readable:
+
+```python
+Processing.runAlgorithm(
+  "native:filedownloader", 
+  {'OUTPUT': 'response.json', 'URL': 'http://httpbin.org/get}
+)
+```
+
+...but it takes at least 12 lines to set up and tear down the `Processing` object:
+
+```python
+# --- call_download_ex.py ---
+
+import os
+import sys
+
+# add additional directories that QGIS needs to find Python plugins
+# this is different for all the OSes
+if sys.platform == "darwin":
+  qgis_app = os.path.abspath(os.path.join(sys.executable, "..", "..", "..", ".."))
+  # for QT
+  os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = f'{qgis_app}/Contents/PlugIns'
+  # for Processing
+  sys.path.append(f'{qgis_app}/Contents/Resources/python/plugins')
+  
+elif sys.platform in ('linux', 'linux2'):
+  # for Processing
+  # may be different on different flavours of linux
+  sys.path.append('/usr/share/qgis/python/plugins')
+
+# load QGIS modules
+from qgis.core import QgsApplication, QgsProcessingFeedback
+from qgis.analysis import QgsNativeAlgorithms 
+
+# make an "application" (False for no UI)
+qgs = QgsApplication([], False)
+QgsApplication.initQgis()
+
+# add the native routines to the processing registry
+QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+
+# load the processing library
+from processing.core.Processing import Processing
+Processing.initialize()
+
+# run the algorithm
+result = Processing.runAlgorithm(
+  "native:filedownloader", 
+  {'OUTPUT': 'response.json', 'URL': 'http://httpbin.org/get'}
+)
+
+# exit QGIS
+QgsApplication.exitQgis()
+
+# print result to stdout
+print(result)
+```
+
+This is mostly inspired by [this GIS stackexchange post](https://gis.stackexchange.com/questions/279874/using-qgis3-processing-algorithms-from-standalone-pyqgis-scripts-outside-of-gui), where you might be able to find more detail about your particular platform. In particular, I have no way to test Windows, but I imagine the pattern is similar.
+
+The next hurdle is calling the right `python3`. In Linux, you *should* be able to use the system `python3`. On Mac, you have to use the `python3` that was shipped with QGIS, which on my computer is `"/Applications/QGIS3.10.app/Contents/MacOS/bin/python3"`. This is a bit specific, so I've been using the following functions to detect the QGIS Python installation:
+
+
+```r
+find_qgis <- function() {
+  if (Sys.info()["sysname"] == "Darwin") {
+    app_dirs  <- list.files("/Applications", "^QGIS3\\.", full.names = TRUE)
+    if (length(app_dirs) == 0) {
+      rlang::abort("Can't find QGIS3* in '/Applications'")
+    }
+    
+    message(glue::glue("Using `.qgis = '{app_dirs[1]}'`"))
+    app_dirs[1]
+  }
+}
+
+find_qgis_python <- function(.qgis = find_qgis()) {
+  if (Sys.info()["sysname"] == "Darwin") {
+    file.path(.qgis, "Contents/MacOS/bin/python3")
+  } else {
+    "python3"
+  }
+}
+
+find_qgis_python()
+```
+
+```
+## Using `.qgis = '/Applications/QGIS3.10.app'`
+```
+
+```
+## [1] "/Applications/QGIS3.10.app/Contents/MacOS/bin/python3"
+```
+
+I use the [processx](https://processx.r-lib.org/) package to call external programs because it works more predictably on multiple platforms, passes interrupts on to the subprocess, doesn't require shell-quoting arguments, and allows a great deal more flexibility. For example, calling `python3 call_download_ex.py` would look like this:
+
+
+```r
+processx::run(
+  find_qgis_python(),
+  args = "call_download_ex.py",
+  echo = TRUE, echo_cmd = TRUE
+)
+```
+
+```
+## Using `.qgis = '/Applications/QGIS3.10.app'`
+```
+
+```
+## Running /Applications/QGIS3.10.app/Contents/MacOS/bin/python3 \
+##   call_download_ex.py
+## {'OUTPUT': 'response.json'}
+```
+
+```
+## $status
+## [1] 0
+## 
+## $stdout
+## [1] "{'OUTPUT': 'response.json'}\n"
+## 
+## $stderr
+## [1] ""
+## 
+## $timeout
+## [1] FALSE
+```
+
+That works great for one use case, but really, we need a way to specify the algorithms and specify the parameters from R. I'll use command line arguments for the input and JSON for the output, since `processx::run()` helpfully hands us the stdout string. In Python, you can get the command-line arguments from `sys.argv`, which can contain JSON no problem (particularly since `processx::run()` doesn't require shell quoting). My generalized Python file to call one QGIS algorithm looks like this:
+
+```python
+# -----  call_qgis.py -----
+
+import os
+import sys
+import json
+
+qgis_algorithm  = sys.argv[1]
+qgis_params = json.loads(sys.argv[2])
+
+if sys.platform == "darwin":
+  qgis_app = os.path.abspath(os.path.join(sys.executable, "..", "..", "..", ".."))
+  # for QT
+  os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = f'{qgis_app}/Contents/PlugIns'
+  # for Processing
+  sys.path.append(f'{qgis_app}/Contents/Resources/python/plugins')
+
+elif sys.platform in ('linux', 'linux2'):
+  # for Processing
+  # may be different on different flavours of linux
+  sys.path.append('/usr/share/qgis/python/plugins')
+
+from qgis.core import QgsApplication
+from qgis.analysis import QgsNativeAlgorithms 
+
+qgs = QgsApplication([], False)
+QgsApplication.initQgis()
+QgsApplication.processingRegistry().addProvider(QgsNativeAlgorithms())
+
+from processing.core.Processing import Processing
+Processing.initialize()
+
+result = Processing.runAlgorithm(qgis_algorithm, qgis_params)
+
+QgsApplication.exitQgis()
+
+print(json.dumps(result))
+```
+
+Now, we can call *any* processing algorithm in QGIS:
+
+
+```r
+processx::run(
+  find_qgis_python(),
+  args = c(
+    "call_qgis.py",
+    "native:filedownloader", 
+    '{"OUTPUT": "response.json", "URL": "http://httpbin.org/get"}'
+  ),
+  echo = TRUE, echo_cmd = TRUE
+)
+```
+
+```
+## Using `.qgis = '/Applications/QGIS3.10.app'`
+```
+
+```
+## Running /Applications/QGIS3.10.app/Contents/MacOS/bin/python3 \
+##   call_qgis.py 'native:filedownloader' \
+##   '{"OUTPUT": "response.json", "URL": "http://httpbin.org/get"}'
+## {"OUTPUT": "response.json"}
+```
+
+```
+## $status
+## [1] 0
+## 
+## $stdout
+## [1] "{\"OUTPUT\": \"response.json\"}\n"
+## 
+## $stderr
+## [1] ""
+## 
+## $timeout
+## [1] FALSE
+```
+
+Cool! It's still not very R-like though, but because the input and output are JSON, we can wrap this in an R function. Mine looks like this (note the use of `rlang::list2()`, which is a quick and dirty way to support tidy eval for `...`).
+
+
+```r
+call_qgis <- function(.algorithm, ..., 
+                      .python = find_qgis_python()) {
+  params <- rlang::list2(...)
+
+  result <- processx::run(
+    .python, 
+    args = c(
+      "call_qgis.py", 
+      .algorithm,
+      jsonlite::toJSON(params, null = "null", auto_unbox = TRUE)
+    ), 
+    echo = TRUE, echo_cmd = TRUE
+  )
+  
+  jsonlite::fromJSON(result$stdout)
+}
+
+result <- call_qgis(
+  "native:filedownloader", 
+  URL = "https://httpbin.org/get", 
+  OUTPUT = "response.json"
+)
+```
+
+```
+## Using `.qgis = '/Applications/QGIS3.10.app'`
+```
+
+```
+## Running /Applications/QGIS3.10.app/Contents/MacOS/bin/python3 \
+##   call_qgis.py 'native:filedownloader' \
+##   '{"URL":"https://httpbin.org/get","OUTPUT":"response.json"}'
+## {"OUTPUT": "response.json"}
+```
+
+```r
+result$OUTPUT
+```
+
+```
+## [1] "response.json"
+```
+
+There's a few things you should be aware of with this approach. First, you might have to restart R to get it to work the first time (I don't know why). Second, some processing algorithms pop up a user interface. You obviously don't want that in a script, and I don't know how to avoid it (a good example is putting a bad URL in as the `URL` parameter above). You can somewhat get around this by passing `timeout` to `processx::run()`, which will kill a process that hasn't responded in a certain amount of time. Next, getting a feedback log is [possible, but is more complex](https://gis.stackexchange.com/questions/310787/getting-log-message-from-qgis-processing-framework). Finally, while I *think* that QGIS processing respects the working directory, there's a very real chance you will have to use `fs::path_abs()` to force a complete filename.
+
+Now let's try something spatial, since that's what we're in this for. I'm interested in the watershed tools from GRASS7, but I'll use `"gdal:cliprasterbymasklayer"` as an example. The parameters I scraped from the QGIS GUI were these:
+
+```
+{ 
+  'ALPHA_BAND' : False, 
+  'CROP_TO_CUTLINE' : True,
+  'DATA_TYPE' : 0,
+  'EXTRA' : '',
+  'INPUT' : 'dem_filled.tif', 
+  'KEEP_RESOLUTION' : False, 
+  'MASK' : 'lakes.shp',
+  'MULTITHREADING' : False, 
+  'NODATA' : None, 
+  'OPTIONS' : '', 
+  'OUTPUT' : 'TEMPORARY_OUTPUT', 
+  'SET_RESOLUTION' : False, 
+  'SOURCE_CRS' : None, 
+  'TARGET_CRS' : None, 
+  'X_RESOLUTION' : None, 
+  'Y_RESOLUTION' : None
+}
+```
+
+The only three we need are `INPUT`, `MASK`, and `OUTPUT`, all of which are vector or raster layers. Be aware that occasionally, processing algorithms return a Python object here instead of a filename. This isn't the case GDAL, SAGA, and GRASS, and more than likely you can do the other stuff in R much more efficiently. You can use `TEMPORARY_OUTPUT`, as a filename output and the actual name of the tempfile will get returned in the output. 
+
+Using our `call_qgis()` wrapper, this call would look like this:
+
+
+```r
+result <- call_qgis(
+  "gdal:cliprasterbymasklayer",
+  
+  "INPUT" = "dem_filled.tif", 
+  "MASK" = "lakes.shp",
+  "OUTPUT" = "TEMPORARY_OUTPUT", 
+  
+  "ALPHA_BAND" = FALSE, 
+  "CROP_TO_CUTLINE" = TRUE,
+  "DATA_TYPE" = 0,
+  "EXTRA" = "",
+  "KEEP_RESOLUTION" = FALSE, 
+  "MULTITHREADING" = FALSE, 
+  "NODATA" = NULL, 
+  "OPTIONS" = "", 
+  "SET_RESOLUTION" = FALSE, 
+  "SOURCE_CRS" = NULL, 
+  "TARGET_CRS" = NULL, 
+  "X_RESOLUTION" = NULL, 
+  "Y_RESOLUTION" = NULL
+)
+```
+
+```
+## Using `.qgis = '/Applications/QGIS3.10.app'`
+```
+
+```
+## Running /Applications/QGIS3.10.app/Contents/MacOS/bin/python3 \
+##   call_qgis.py 'gdal:cliprasterbymasklayer' \
+##   '{"INPUT":"dem_filled.tif","MASK":"lakes.shp","OUTPUT":"TEMPORARY_OUTPUT","ALPHA_BAND":false,"CROP_TO_CUTLINE":true,"DATA_TYPE":0,"EXTRA":"","KEEP_RESOLUTION":false,"MULTITHREADING":false,"NODATA":null,"OPTIONS":"","SET_RESOLUTION":false,"SOURCE_CRS":null,"TARGET_CRS":null,"X_RESOLUTION":null,"Y_RESOLUTION":null}'
+## {"OUTPUT": "/private/var/folders/bq/2rcjstv90nx1_wrt8d3gqw6m0000gn/T/processing_56ce6c257e724c36afedc0d73b28b9d6/0c9640b16c6842cc81a9bad730755843/OUTPUT.tif"}
+```
+
+```r
+plot(stars::read_stars(result$OUTPUT))
+```
+
+<img src="unnamed-chunk-5-1.png" width="672" />
+
+This is sufficient to get you access to some of the harder-to-come-by algorithms in SAGA and GRASS, although there's certainly more functionality if you can jump to Python (particularly if you're on Linux, where this is slightly easier).
+

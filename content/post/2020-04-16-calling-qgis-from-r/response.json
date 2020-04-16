@@ -1,0 +1,12 @@
+{
+  "args": {}, 
+  "headers": {
+    "Accept-Encoding": "gzip, deflate", 
+    "Accept-Language": "en-CA,*", 
+    "Host": "httpbin.org", 
+    "User-Agent": "Mozilla/5.0 QGIS/31002", 
+    "X-Amzn-Trace-Id": "Root=1-5e9888ed-fab13586e088a6b48b4796b4"
+  }, 
+  "origin": "24.138.19.44", 
+  "url": "https://httpbin.org/get"
+}
