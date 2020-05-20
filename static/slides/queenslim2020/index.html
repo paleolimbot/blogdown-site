@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Rethinking long-term (paleo)environmental data: collecting data for future generations</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dewey W. Dunnington (@paleolimbot)" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="presentation.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: title-slide, middle, title-slide
+
+# Rethinking long-term (paleo)environmental data: collecting data for future generations
+## <br/>
+### Dewey W. Dunnington (<span class="citation">@paleolimbot</span>)
+### Centre for Water Resources Studies<br/>Dalhousie University
+
+---
+
+class: center, middle
+
+
+
+&lt;img src="figs/mudata_paper.png" width="747" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Dunnington and Spooner (2017) https://doi.org/10.1139/facets-2017-0026
+]
+
+---
+class: center, middle, inverse
+
+# What even is data!?
+
+---
+class: center, middle, inverse
+
+# Tables for each of:
+
+## Locations
+
+## Parameters
+
+## Samples
+
+## Measurements
+
+---
+
+# Case study: collecting 47 Pb records
+
+&lt;img src="figs/figS1-sites-1.png" width="1097" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Dunnington et al. (submitted), Science of the Total Environment
+]
+
+---
+# Case study: collecting 47 Pb records
+
+&lt;img src="figs/fig1-pb-conc-1.png" width="1309" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Dunnington et al. (submitted), Science of the Total Environment
+]
+
+---
+# Case study: Locations
+
+In this study, Locations == Cores
+
+- **Location ID (unique to every core)**
+- Latitude
+- Longitude
+- Coring date
+- Publications
+
+Table (S)1!!
+
+---
+# Case study: Locations
+
+&lt;img src="figs/charles_etal90_A1.png" width="765" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Charles et al. (1990) https://doi.org/10.1007/BF00219459
+]
+
+---
+
+# Case study: Locations
+
+&lt;img src="figs/norton_etal97_cores.png" width="600" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Norton et al. (1997) https://doi.org/10.1023/A:1018380610893
+]
+
+---
+
+# Case study: Parameters
+
+In this study, parameters == chemical compounds
+
+- **Parameter ID (unique to each chemical compound)**
+- Measurement method
+- Units, Detection limits (if they're the same for all measurements!)
+
+---
+
+# Case study: Parameters
+
+&lt;img src="figs/roberts_etal19_params.png" width="701" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Roberts et al. (2019) https://doi.org/10.1016/j.scitotenv.2019.04.167
+]
+
+---
+
+# Case study: Parameters
+
+&lt;img src="figs/norton_etal92_methods.png" width="371" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Norton et al. (1992) https://doi.org/10.1007/BF00181714
+]
+
+---
+
+# Case study: Samples
+
+For this study, we just needed to know which samples exist...
+
+- **Location ID**, **interval start depth**
+- Sample ID (might not have ever existed)
+- Thickness
+
+Not really measurements (because they're part of the experimental design), but similar
+
+---
+
+# Case study: Samples
+
+&lt;img src="figs/charles_etal90_data.png" width="802" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Case study: Measurements
+
+- **Location ID**, **interval start depth**, **Parameter ID**
+- Value
+- Error!!
+- Units
+- Detection limits
+- Detection limit status (above, below detect)
+
+---
+
+# Case study: Measurements
+
+&lt;img src="figs/brewer_etal_meas.png" width="533" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Case study: Measurements
+
+&lt;img src="figs/charles_etal90_data.png" width="802" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Case study: collected data
+
+
+```r
+library(mudata2)
+md &lt;- read_mudata_dir("~/Desktop/papers/pirla/data/data-all.mudata")
+```
+
+&lt;img src="figs/mudata_paper.png" width="747" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+Dunnington and Spooner (2017) https://doi.org/10.1139/facets-2017-0026
+]
+
+---
+
+# Case study: collected data
+
+
+```r
+md %&gt;% tbl_locations()
+```
+
+```
+## # A tibble: 58 x 17
+##    dataset location lake_name year_max references   lon   lat short_name
+##    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt;        &lt;dbl&gt; &lt;chr&gt;      &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt;     
+##  1 norton  Bear P.… Bear Pond    1982. @charles_…    NA    NA Bear      
+##  2 norton  Big Moo… Big Moos…    1982. @charles_…    NA    NA Big Moose 
+##  3 norton  CARR PD. Carr Pond    1982  &lt;NA&gt;          NA    NA Carr      
+##  4 norton  Clear P… Clear Po…    1982. @charles_…    NA    NA Clear     
+##  5 norton  Deep L.… Deep Lake    1983. @charles_…    NA    NA Deep      
+##  6 norton  EAST CH… East Cha…    1979  @davis_et…    NA    NA East Chai…
+##  7 norton  FISH RI… Fish Riv…    1982  @hanson_e…    NA    NA Fish River
+##  8 norton  FOURTH … Fourth L…    1982  @norton_k…    NA    NA Fourth    
+##  9 norton  HAYSTAC… Haystack…    1983  @davis_et…    NA    NA Haystack  
+## 10 norton  KLONDIK… Klondike…    1978  @davis_et…    NA    NA Klondike  
+## # … with 48 more rows, and 9 more variables: lake_lon &lt;dbl&gt;,
+## #   lake_lat &lt;dbl&gt;, region &lt;chr&gt;, region_colour &lt;chr&gt;,
+## #   surface_area_ha &lt;dbl&gt;, max_depth_m &lt;dbl&gt;, elevation_m &lt;dbl&gt;,
+## #   watershed_area_ha &lt;dbl&gt;, catchment_surface_area_ratio &lt;dbl&gt;
+```
+
+---
+
+# Case study: collected data
+
+
+```r
+md %&gt;% tbl_params()
+```
+
+```
+## # A tibble: 43 x 2
+##    dataset param
+##    &lt;chr&gt;   &lt;chr&gt;
+##  1 norton  Pb210
+##  2 norton  Cs137
+##  3 norton  LOD  
+##  4 norton  LOI  
+##  5 norton  Ti   
+##  6 norton  Al   
+##  7 norton  Fe   
+##  8 norton  Mn   
+##  9 norton  Ca   
+## 10 norton  Mg   
+## # … with 33 more rows
+```
+
+---
+
+# Case study: collected data
+
+
+```r
+md %&gt;% tbl_data()
+```
+
+```
+## # A tibble: 37,907 x 14
+##    dataset location param depth value unit  error element_param unit_ratio
+##    &lt;chr&gt;   &lt;chr&gt;    &lt;chr&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;chr&gt; &lt;dbl&gt; &lt;chr&gt;              &lt;dbl&gt;
+##  1 norton  EAST CH… Pb210  0.75 999   Bq/kg    NA &lt;NA&gt;                  37
+##  2 norton  EAST CH… Pb210  1.75 936.  Bq/kg    NA &lt;NA&gt;                  37
+##  3 norton  EAST CH… Pb210  3.75 636.  Bq/kg    NA &lt;NA&gt;                  37
+##  4 norton  EAST CH… Pb210  4.25 792.  Bq/kg    NA &lt;NA&gt;                  37
+##  5 norton  EAST CH… Pb210  4.75 844.  Bq/kg    NA &lt;NA&gt;                  37
+##  6 norton  EAST CH… Pb210  5.75 866.  Bq/kg    NA &lt;NA&gt;                  37
+##  7 norton  EAST CH… Pb210  6.75 599.  Bq/kg    NA &lt;NA&gt;                  37
+##  8 norton  EAST CH… Pb210  8.25 359.  Bq/kg    NA &lt;NA&gt;                  37
+##  9 norton  EAST CH… Pb210 10.8  104.  Bq/kg    NA &lt;NA&gt;                  37
+## 10 norton  EAST CH… Pb210 12.2   70.3 Bq/kg    NA &lt;NA&gt;                  37
+## # … with 37,897 more rows, and 5 more variables: xrf_id &lt;chr&gt;, err &lt;dbl&gt;,
+## #   err_type &lt;chr&gt;, n &lt;int&gt;, n_finite &lt;int&gt;
+```
+
+---
+
+# Case study: collected data
+
+
+```r
+md %&gt;%
+  tbl_data() %&gt;% 
+  filter(param == "Ti", location  == "POC15-2") %&gt;% 
+  ggplot(aes(value, depth)) +
+  geom_point() +
+  scale_y_reverse()
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-16-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle, inverse
+
+# What decisions you need to make about...
+
+## Locations
+
+## Parameters
+
+## Samples
+
+## Measurements
+
+---
+class: center
+
+# Locations and parameters
+
+## What do you consider unique values?
+
+## What do you call unique values?
+
+---
+class: center
+
+# Naming things
+
+## Short enough that you won't abbreviate them
+
+## Long enough that you don't discard information
+
+## Special characters (e.g., `_-/`) mean one thing each
+
+```
+Parameter: sinlab/C
+Location: FCL16-3
+Sample: FCL3 23-24
+```
+
+---
+class: center
+
+# Measurements
+
+## Don't discard detection limits!
+
+## Don't discard analytical error
+
+## Don't discard non-detect values
+
+---
+
+# Organizing Files: Data and Data Raw
+
+&lt;img src="figs/files_data_raw.png" width="552" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Organizing Files: Data and Data Raw
+
+&lt;img src="figs/files_data.png" width="553" style="display: block; margin: auto;" /&gt;
+
+---
+class: center
+
+# Case study: Climate Normals
+
+&lt;ftp://ftp.tor.ec.gc.ca/Pub/Normals/ENGLISH/&gt;
+
+&lt;https://www1.ncdc.noaa.gov/pub/data/normals/1981-2010/&gt;
+
+---
+
+# Acknowledgements
+
+Funding from NSERC (CGS-D), industrial partners of the Centre for Water Resources Studies.
+
+&lt;!-- water studies/dal logos --&gt;
+.figure-dal[
+&lt;img src="logos/water-studies.png" width="683" style="display: block; margin: auto;" /&gt;&lt;img src="logos/dalhousie.png" width="403" style="display: block; margin: auto;" /&gt;
+]
+
+&lt;!-- partner logos ---&gt;
+
+.figure-partner[
+&lt;img src="logos/nserc.png" width="407" style="display: block; margin: auto;" /&gt;&lt;img src="logos/halifax-water.png" width="105" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbrm-water-utility.png" width="255" style="display: block; margin: auto;" /&gt;&lt;img src="logos/moncton.png" width="114" style="display: block; margin: auto;" /&gt;&lt;img src="logos/agat.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/mantech.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbcl.png" width="275" style="display: block; margin: auto;" /&gt;&lt;img src="logos/luminultra.png" width="301" style="display: block; margin: auto;" /&gt;&lt;img src="logos/aquisense.png" width="254" style="display: block; margin: auto;" /&gt;
+]
+
+.footnote[
+Slides created using [xaringan](https://github.com/yihui/xaringan), [remark.js](https://remarkjs.com), [knitr](http://yihui.name/knitr), and [R Markdown](https://rmarkdown.rstudio.com).
+]
+
+---
+class: center
+
+# Questions?
+
+These slides: &lt;https://fishandwhistle.net/slides/queenslim2020&gt;
+
+@paleolimbot on [Twitter](https://twitter.com/paleolimbot) and [GitHub](https://github.com/paleolimbot)
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+  </body>
+</html>
