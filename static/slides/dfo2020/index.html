@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>Reproducible GIS in R for Environmental Research</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dewey Dunnington, M.Sc. P.Geo." />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="presentation.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: title-slide, middle, title-slide
+
+# Reproducible GIS in R for Environmental Research
+## <br/>
+### Dewey Dunnington, M.Sc. P.Geo.
+### Centre for Water Resources Studies<br/>Dalhousie University<br/><br/>Workshop materials: <a href="https://bit.ly/3cypI81" class="uri">https://bit.ly/3cypI81</a><br/>These slides: <a href="https://fishandwhistle.net/slides/dfo2020" class="uri">https://fishandwhistle.net/slides/dfo2020</a>
+
+---
+
+class: center, middle
+
+
+
+&lt;img src="figs/me.jpg" style="width: 500px" /&gt;
+
+---
+class: center, middle
+
+![](figs/rstudio.png)
+
+---
+class: center, middle
+
+&lt;img src="figs/ggplot2.png" style="width: 500px" /&gt;
+
+---
+
+
+```r
+ggplot(mpg, aes(displ, hwy))  +
+  geom_point()
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-1-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+ggplot(mpg, aes(displ, hwy))  +
+  geom_point()
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-2-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle, inverse
+
+# Workshop materials
+
+## https://bit.ly/3cypI81
+
+---
+class: center, middle, inverse
+
+# Make an analysis **reproducible**
+
+# **Extend the scale** of an analysis
+
+# Do an analysis that was not **possible**
+
+---
+
+# Reproducible GIS
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Reproducible GIS
+
+
+```r
+library(tidyverse)
+library(ggspatial)
+
+sites &lt;- readxl::read_excel(
+  "data/dunnington_etal20.xlsx", 
+  sheet = "locations"
+)
+
+sites %&gt;% 
+  select(short_name, lake_lon, lake_lat, annual_precip) %&gt;% 
+  head(3)
+```
+
+```
+## # A tibble: 3 x 4
+##   short_name lake_lon lake_lat annual_precip
+##   &lt;chr&gt;         &lt;dbl&gt;    &lt;dbl&gt;         &lt;dbl&gt;
+## 1 Silver        -74.9     43.8         1241.
+## 2 West          -74.9     43.8         1241.
+## 3 Big Moose     -74.8     43.8         1241.
+```
+
+---
+
+# Reproducible GIS
+
+
+```r
+ggplot(sites) +
+  annotation_map_tile(zoom = 6) +
+  geom_spatial_point(
+    aes(lake_lon, lake_lat, colour = annual_precip),
+    size = 3
+  ) +
+  annotation_scale(location = "br") +
+  theme_void() +
+  scale_colour_viridis_c() +
+  labs(colour = "Annual precipitation (mm)") +
+  theme(legend.position = "bottom")
+```
+
+---
+
+# Reproducible GIS
+
+
+```r
+download.file(
+  paste(
+    "http://ftp.geogratis.gc.ca",
+    "pub/nrcan_rncan/vector/framework_cadre/Atlas_of_Canada_1M",
+    "boundary/AC_1M_BoundaryPolygons.shp.zip",
+    sep = "/"
+  ),
+  "AC_1M_BoundaryPolygons.shp.zip"
+)
+
+unzip("AC_1M_BoundaryPolygons.shp.zip", exdir = "AC")
+```
+
+---
+
+# Reproducible GIS
+
+
+```r
+library(sf)
+
+boundaries &lt;- read_sf("AC/AC_1M_BoundaryPolygons_shp/AC_1M_BoundaryPolygons.shp")
+
+boundaries_simple &lt;- boundaries %&gt;% 
+  filter(
+    POL_DIV %in% c(
+      "Quebec",
+      "New York", "New Hampshire", "Vermont",
+      "Maine", "New Brunswick", "Nova Scotia",
+      "Prince Edward Island"
+    ),
+    SELECTION == "sparse"
+  ) %&gt;% 
+  st_transform(3857)
+```
+
+---
+
+# Reproducible GIS
+
+
+```r
+ggplot(sites) +
+  annotation_spatial(boundaries_simple, size = 0.2) +
+  geom_spatial_point(
+    aes(lake_lon, lake_lat, colour = annual_precip),
+    size = 3
+  ) +
+  annotation_scale(location = "br") +
+  theme_void() +
+  scale_colour_viridis_c() +
+  labs(colour = "Annual precipitation (mm)") +
+  theme(legend.position = "bottom")
+```
+
+---
+
+# Reproducible GIS
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+class: center, middle, inverse
+
+# Make an analysis **reproducible**
+
+# **Extend the scale** of an analysis
+
+# Do an analysis that was not **possible**
+
+---
+
+# Large-scale GIS
+
+The intersection of the [massive sediment coring program from the 1980s](https://novascotia.ca/natr/meb/download/dp132.asp) and the [Nova Scotia Environment water chemistry dataset](https://data.novascotia.ca/Environment-and-Energy/Nova-Scotia-Lake-Chemistry-Data/vn55-yjyi):
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-10-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+# Large-scale GIS
+
+Where is the outlet!?
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-11-1.png" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+https://fishandwhistle.net/post/2020/calculating-lake-outlets-using-r/
+]
+
+---
+
+# Large-scale GIS
+
+Where is the outlet!?
+
+
+```r
+# calculate boundary region polygon
+boundary &lt;- lake %&gt;% st_boundary() %&gt;% st_buffer(40)
+
+# make the boundary region polygon into a raster
+mask_boundary &lt;- rasterize(as_Spatial(boundary), accumulation)
+accumulation_boundary &lt;- mask_boundary * accumulation
+
+# get the location of the maximum value in the boundary raster
+outlet_xy &lt;- xyFromCell(accumulation_boundary, which.max(accumulation_boundary))
+
+# make an sf object from outlet_xy
+outlet &lt;- st_sfc(st_point(outlet_xy), crs = st_crs(lake))
+```
+
+.footnote[
+https://fishandwhistle.net/post/2020/calculating-lake-outlets-using-r/
+]
+
+---
+
+# Large-scale GIS
+
+
+```r
+ggplot() +
+  layer_spatial(accumulation_boundary) +
+  layer_spatial(lake, fill = NA, colour = "white") +
+  layer_spatial(outlet, pch = 1, size = 3, col = "white") +
+  theme_void() +
+  annotation_scale()
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-13-1.png" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+https://fishandwhistle.net/post/2020/calculating-lake-outlets-using-r/
+]
+
+---
+class: center, middle, inverse
+
+# Make an analysis **reproducible**
+
+# **Extend the scale** of an analysis
+
+# Do an analysis that was not **possible**
+
+---
+
+# Doing the (previously) impossible
+
+.center[
+![](figs/precip-animate-1.gif)
+]
+
+.footnote[
+https://fishandwhistle.net/post/2019/visualizing-canadian-climate-normals/
+]
+
+---
+
+# Doing the (previously) impossible
+
+.center[
+![](figs/pockwock_watershed.png)
+]
+
+.footnote[
+https://www.rayshader.com/
+]
+
+---
+
+# Doing the (previously) impossible
+
+.center[
+&lt;img src="figs/spin.gif" style="width: 600px;" /&gt;
+]
+
+.footnote[
+https://github.com/r-spatial/libs2 / https://github.com/paleolimbot/s2plot
+]
+
+---
+
+# Acknowledgements
+
+Funding from NSERC (CGS-D), industrial partners of the Centre for Water Resources Studies.
+
+&lt;!-- water studies/dal logos --&gt;
+.figure-dal[
+&lt;img src="logos/water-studies.png" width="683" style="display: block; margin: auto;" /&gt;&lt;img src="logos/dalhousie.png" width="403" style="display: block; margin: auto;" /&gt;
+]
+
+&lt;!-- partner logos ---&gt;
+
+.figure-partner[
+&lt;img src="logos/nserc.png" width="407" style="display: block; margin: auto;" /&gt;&lt;img src="logos/halifax-water.png" width="105" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbrm-water-utility.png" width="255" style="display: block; margin: auto;" /&gt;&lt;img src="logos/moncton.png" width="114" style="display: block; margin: auto;" /&gt;&lt;img src="logos/agat.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/mantech.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbcl.png" width="275" style="display: block; margin: auto;" /&gt;&lt;img src="logos/luminultra.png" width="301" style="display: block; margin: auto;" /&gt;&lt;img src="logos/aquisense.png" width="254" style="display: block; margin: auto;" /&gt;
+]
+
+.footnote[
+Slides created using [xaringan](https://github.com/yihui/xaringan), [remark.js](https://remarkjs.com), [knitr](http://yihui.name/knitr), and [R Markdown](https://rmarkdown.rstudio.com).
+]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+  </body>
+</html>
