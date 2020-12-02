@@ -19,6 +19,14 @@ date_format = "Jan 2006"
 #   Begin/end multi-line descriptions with 3 quotes `"""`.
 
 [[experience]]
+  title = "Physical Scientist"
+  company = "Department of Fisheries and Oceans]
+  company_url = "https://www.dfo-mpo.gc.ca/index-eng.htm"
+  date_start = "2020-10-13"
+  date_end = ""
+  description = """Developed data access tools for the [Argo floats program](http://www.meds-sdmm.dfo-mpo.gc.ca/isdm-gdsi/argo/index-eng.html) and the [Barrow Strait Real Time Observatory](https://noise.phys.ocean.dal.ca/barrow/)."""
+
+[[experience]]
   title = "Intern, ggplot2"
   company = "RStudio, Inc."
   company_url = "https://rstudio.com/"
