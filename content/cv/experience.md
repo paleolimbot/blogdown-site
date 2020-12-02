@@ -20,7 +20,7 @@ date_format = "Jan 2006"
 
 [[experience]]
   title = "Physical Scientist"
-  company = "Department of Fisheries and Oceans]
+  company = "Department of Fisheries and Oceans"
   company_url = "https://www.dfo-mpo.gc.ca/index-eng.htm"
   date_start = "2020-10-13"
   date_end = ""
