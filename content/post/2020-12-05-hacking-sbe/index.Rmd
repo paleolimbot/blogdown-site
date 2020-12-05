@@ -1,0 +1,235 @@
+---
+title: "Hacking Seabird HEX files using R and the tidyverse"
+subtitle: ""
+summary: ""
+authors: []
+tags: []
+categories: []
+date: 2020-12-05T10:10:14-04:00
+lastmod: 2020-12-05T10:10:14-04:00
+featured: false
+draft: false
+image:
+  caption: ""
+  focal_point: ""
+  preview_only: false
+projects: []
+output: hugodown::md_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+theme_set(theme_bw())
+knitr::opts_chunk$set(dpi = 300)
+```
+
+Avid readers of this blog, if there are any, would have figured out that I really love [low-level data IO](/post/2016/raspberry-pi-pure-python-infrared-remote-control) and [hacking proprietary file formats](post/2016/processing-sub-bottom-profiling-data-in-python) so that I can use the data in the open-source (mostly) software that I know and love. At my new position I was assigned to attend [Seabird University](https://www.seabird.com/training-videos), an excellent six-session training course on how to acquire and process oceanographic data using Seabird instruments and software. My brain went straight for one thing: can I do this in R? After strict instructions not to pursue this at work, I decided not to. At work.
+
+The SeaSoft family of software for Seabird instruments is professionally built and uses high-quality published data proessing methods. SeaSoft only run on Windows, however, and many of these methods can also be applied using open-source oceanographic software such as the [oce package for R](https://dankelley.github.io/oce/). There is one step, however, whose low-level details are poorly documented: the converting of .hex files read from an instrument to .cnv files with human-readable outputs. 
+
+I'll use the data provided for the homework assignment ("cast1.hex") to take a stab at it along with the trusty [tidyverse](https://tidyverse.org) family of R packages.
+
+```{r}
+library(tidyverse)
+read_lines("cast1.hex")[1:20]
+```
+
+The first things to notice are (1) this is a text file, (2) there's some header information that might be useful, and (3) the rest of the file is made up of lines exactly 60 characters long. As the file extension indicates, these are hexadecimal representations of bytes sent by the unit. R has a vector type for bytes (`raw()`), so a good first step might be to parse the file into an object that looks like `list(raw(), raw(), raw(), ...)` so that we can inspect the values for what they are (strings of bytes). There are more efficient hex parsers out there, but for now we just need something that works:
+
+```{r}
+line_to_raw <- function(line) {
+  line_raw <- str_sub(
+    line,
+    seq(1, nchar(line) - 1, 2),
+    seq(2, nchar(line), 2)
+  )
+  as.raw(paste0("0x", line_raw))
+}
+
+lines_hex <- read_lines("cast1.hex", skip = 17)
+lines_raw <- map(lines_hex, line_to_raw)
+
+head(lines_raw, 3)
+```
+
+The second thing I noticed was that some of the bytes stay the same for every scan. This isn't limited to just one value, but shows up many times over the course of the file. To find out how prevalent this was, I did what everybody should do with raw data the first time they open it: plot! For strings of bytes this is a bit non-standard, but after reading David Robinson's [excelent post about plotting the structure of the Enron Excel attachments](https://rpubs.com/dgrtwo/tidying-enron), I decided on a similar approach.
+
+```{r}
+lines_tbl <- tibble(
+  lines_hex = lines_hex,
+  lines_raw = lines_raw,
+  scan = seq_along(lines_raw),
+  pos = lapply(lines_raw, seq_along)
+)
+
+lines_tbl %>%
+  select(scan, pos, lines_raw) %>% 
+  unnest(c(lines_raw, pos)) %>%
+  ggplot(aes(x = pos, y = scan, fill = as.integer(lines_raw))) +
+  geom_raster() +
+  scale_y_reverse() +
+  scale_x_continuous(breaks = 1:30) +
+  coord_cartesian(expand = FALSE)
+```
+
+It looks like there are many columns of bytes in this category (changing infrequently), but others change rapidly.
+
+At this point, we need some information about what's in the file. This is a cast of a sensor array that was lowered into the ocean, probably soaked at the surface for some amount of time, and was then lowered and possibly retrieved at some point. The point is, the values represented by scans next to each other are probably representative of similar if not identical values (seawater properties are unlikely to change that quickly). Another thing we know is that the values that are output here are uncalibrated measurements. That is, they don't represent temperature or conductivity, they represent the voltages and/or frequencies measured by the sensor.
+
+From hacking previous file formats, I already guessed that each line was probably a bunch of unsigned integers glued together somehow. When searching the hex file format, I came across [this Matlab script](http://mooring.ucsd.edu/software/matlab/doc/toolbox/data/sbe/read_hex.html) which gave some clues as to how these fields are represented on a different Seabird sensor. Basically, it looks like each collection of 2, 3, or 4 bytes is representing an unsigned integer that is then multiplied by some number to get the voltage.
+
+Putting both of these together, we can figure out where the groups of bytes are: as integer values change slowly, the most significant digit is likely to change the slowest, whereas the least significant digit (the ones place) is likely to change the fastest:
+
+(animation)
+
+Guessing the most significant digit of everything up to byte position 19 is reasonably straightforward: there is clearly a most and least significant pattern of change in the columns. After that I did some guessing: byte 20 has the same value (14) for almost every scan, and the last four positions seemed to represent something whose least significant byte was on the left (i.e., little endian rather than big endian). In the middle were six columns that didn't change much at all. Six bytes can represent a really really big integer which seemed unlikely when so much effort appears to be made to minimize the number of bytes in the scan, so I split it into two and assumed big endian (I have the benefit of hindsight here...in practice I experimented with a few combinations).
+
+```{r}
+cols <- tibble(
+  start = c(1, 4, 7, 10, 12, 14, 16, 18, 20, 21, 24, 27),
+  size = diff(c(start, 31)),
+  big_endian = c(rep(TRUE, 11), FALSE),
+  name = paste0("col", start)
+)
+
+cols
+```
+
+Now the problem of how to make these integers that we can work with! Again, there are faster solutions, but for now we just need something that works. The key hurdle here is that pretty much nothing can read a 3-byte long integer, so we have to pad it with a fourth byte on the right or left depending on which endian we're dealing with. I chose to use base R's `readBin()` here with a `rawConnection()` rather than drop into compiled code just yet. Note also `scale` and `offset` as a foreshadowing of transformations to come.
+
+```{r}
+extract_raw_uint <- function(x, start, size, big_endian, scale = 1, offset = 0, ...) {
+  x <- x[start:(start + size - 1)]
+  
+  # need to pad size 3 bytes to 4 for R to read
+  if (size == 3 && big_endian) {
+    x <- c(as.raw(0x00), x)
+    size <- 4
+  } else if (size == 3 && !big_endian) {
+    x <- c(x, as.raw(0x00))
+    size <- 4
+  }
+  
+  con <- rawConnection(x)
+  on.exit(close(con))
+  # R can't read a four-byte unsigned integer...approximate with signed for now
+  value <- readBin(
+    con, 
+    "integer", n = 1,
+    size = size, 
+    endian = if (big_endian) "big" else "little", 
+    signed = size >= 4
+  )
+  value / scale + offset
+}
+```
+
+I strategically named the columns of `cols` and arguments of `extract_raw_uint()` the same so that we can use `pmap()` to iterate over and extract the integer values. The syntax is a little awkward here...below is as clean as I could get this.
+
+```{r}
+extract_raw_uint_tbl <- function(x, cols) {
+  values <- pmap(cols, extract_raw_uint, x = x)
+  names(values) <- cols$name
+  as_tibble(values)
+}
+
+values_int <- lines_tbl %>%
+  select(scan, lines_raw) %>% 
+  unnest(lines_raw) %>% 
+  group_by(scan) %>% 
+  summarise(extract_raw_uint_tbl(lines_raw, cols = cols))
+
+values_int
+```
+
+Cool! We indeed have a data frame of values that don't change very much between scans, which was what we optimized for when picking the byte positions. I've been a bit cagey about what we know about the file so far - in this case we do have some information about which values should be present. Usually you will have a .xmlcon file with this information or a .cnv file that contains some output that might give you a clue. In my case, I had the .xmlcon file and access to a Windows computer, so I ran "Data conversion" extracting the voltage and frequency channels as well as the latitude, longitude, and time variables since the .xmlcon file indicated that these variables were present for each scan.
+
+```{r}
+converted <- read_fwf(
+  "cast1.cnv",
+  col_positions = fwf_widths(
+    widths = rep(11, 15), 
+    col_names = c(
+      "prdM", "v0", "v1", "v2", "v3", "timeY", "timeS", "scan", "latitude", 
+      "longitude", "nbytes", "f0", "f1", "f2", "flag"
+    )
+  ),
+  col_types = cols(.default = col_double()),
+  skip = 189
+)
+
+converted
+```
+
+With the "answers", we can compare with our integer values to see which integers extracted from the scan correspond to values generated by SeaSoft. I'm using Spearman's here because whatever the calibration functions are, they have to be one-to-one relationships along the reported range of values. This let us figure out the relationships without knowing anything about the calibration functions themselves!
+
+```{r, message=FALSE, warning=FALSE}
+combinations <- inner_join(
+  values_int %>% pivot_longer(-scan),
+  converted %>% pivot_longer(-scan),
+  by = "scan",
+  suffix = c("_int", "_converted")
+) %>% 
+  mutate(
+    name_int = as_factor(name_int), 
+    name_converted = as_factor(name_converted)
+  )
+
+combinations_perfect <- combinations %>% 
+  group_by(name_int, name_converted) %>% 
+  summarise(r = cor(value_int, value_converted, method = "spearman")) %>% 
+  filter(abs(r) > 0.996)
+
+combinations_perfect %>% 
+  ggplot(aes(name_int, name_converted, fill = r)) +
+  geom_tile() +
+  scale_y_discrete(drop = FALSE) +
+  scale_x_discrete(drop = FALSE)
+```
+
+Using this, we have a match for most of the columns and integer values with the exception of the column at byte position 10. At byte position 20, this is a value that never changes and likely corresponds to flag, which also never changes (there are no scans flagged as bad in the subset we're looking at). Column 27 looks like it has a few matches but this is because `timeY`, `timeS` and `nbytes` are also correlated (bytes because the instrument was writing at at a constant baud rate over a serial port). This plot also gives us the relationships between the raw frequency/voltage channels and the parameters themselves, which we can use to apply the calibration functions later on!
+
+We're almost done hacking the binary part of the format. What remains is to figure out which `scale` and `offset` to apply to each integer value to generate the frequency and/or voltage associated with each integer value. The [Matlab script](http://mooring.ucsd.edu/software/matlab/doc/toolbox/data/sbe/read_hex.html) mentioned above was really useful as well...the values "13.107" and "256" come up a lot in that script and do here as well. I print out the scale and its inverse here because the inverse is usually a prettier number (this is how I parameterized the integer read function).
+
+```{r, warning=FALSE, message=FALSE}
+combinations_perfect %>% 
+  left_join(combinations, by = c("name_int", "name_converted")) %>% 
+  group_by(name_int, name_converted) %>%
+  summarise(
+    broom::tidy(lm(value_converted ~ value_int))
+  ) %>% 
+  select(name_int, name_converted, term, estimate) %>% 
+  pivot_wider(names_from = term, values_from = estimate) %>% 
+  mutate(inverse_scale = 1 / value_int) %>% 
+  mutate_all(~map_chr(., format))
+```
+
+Usefully, there are a number of places where the scale is 1 (meaning that the integer values don't have to be transformed into frequencies or voltages). I'm dubious of the latitude/longitude regression because the spread of the values is so small, and I can't find any meaning in the numbers -26.2144 or 66.84671. Coming back to our `cols` specification, we can add in what we've figured out about the scale and offset for these columns.
+
+```{r, message=FALSE}
+cols_final <- tibble(
+  start = c(1, 4, 7, 10, 12, 14, 16, 18, 20, 21, 24, 27),
+  size = diff(c(start, 31)),
+  big_endian = c(rep(TRUE, 11), FALSE),
+  name = c("f0", "f1", "f2", "ukn", "v0", "v1", "v2", "v3", "flag", "latitude", "longitude", "timeY"),
+  scale = c( 1,  256,    1,     1, rep(13107, 4),               1,  -12800000,    12800000,       1),
+  offset = c(0,    0,    0,     0, rep(0, 4),                   0,   -26.2144,    66.84671,       0)
+)
+
+values <- lines_tbl %>%
+  select(scan, lines_raw) %>% 
+  unnest(lines_raw) %>% 
+  group_by(scan) %>% 
+  summarise(extract_raw_uint_tbl(lines_raw, cols = cols_final))
+
+values
+```
+
+Compare with converted values:
+
+```{r}
+converted %>% 
+  select(any_of(colnames(values)))
+```
+
+Perhaps in a future post I'll be able to cover (1) making it pretty and (2) making it fast!
