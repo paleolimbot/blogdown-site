@@ -15,13 +15,13 @@ image:
   preview_only: false
 projects: []
 output: hugodown::md_document
-rmd_hash: 8217676df6e3ca57
+rmd_hash: 0d47cefa91946f99
 
 ---
 
-Avid readers of this blog, if there are any, would have figured out that I really love [low-level data IO](/post/2016/raspberry-pi-pure-python-infrared-remote-control) and [hacking proprietary file formats](post/2016/processing-sub-bottom-profiling-data-in-python) so that I can use the data in the open-source (mostly) software that I know and love. At my new position I was assigned to attend [Seabird University](https://www.seabird.com/training-videos), an excellent six-session training course on how to acquire and process oceanographic data using Seabird instruments and software. My brain went straight for one thing: can I do this in R?
+Avid readers of this blog, if there are any, would have figured out that I really love [low-level data IO](/post/2016/raspberry-pi-pure-python-infrared-remote-control) and [hacking proprietary file formats](/post/2016/processing-sub-bottom-profiling-data-in-python) so that I can use the data in the open-source (mostly) software that I know and love. At my new position I was assigned to attend [Seabird University](https://www.seabird.com/training-videos), an excellent six-session training course on how to acquire and process oceanographic data using Seabird instruments and software. My brain went straight for one thing: can I do this in R?
 
-The SeaSoft family of software for Seabird instruments is professionally built and uses high-quality published data processing methods. SeaSoft only run on Windows, however, and many of these methods can also be applied using open-source oceanographic software such as the [oce package for R](https://dankelley.github.io/oce/). There is one step, however, whose low-level details are poorly documented: the converting of .hex files read from an instrument to .cnv files with human-readable outputs.
+The SeaSoft family of software for Seabird instruments is professionally built and uses high-quality published data processing methods. SeaSoft only runs on Windows, however, and many of these methods can also be applied using open-source oceanographic software such as the [oce package for R](https://dankelley.github.io/oce/). There is one step, however, whose low-level details are poorly documented: the converting of .hex files read from an instrument to .cnv files with human-readable outputs.
 
 I'll use the data provided for the homework assignment ("cast1.hex") to take a stab at it along with the trusty [tidyverse](https://tidyverse.org) family of R packages.
 
@@ -91,7 +91,7 @@ The second thing I noticed was that some of the bytes stay the same for every sc
   lines_hex = <span class='k'>lines_hex</span>,
   lines_raw = <span class='k'>lines_raw</span>,
   scan = <span class='nf'><a href='https://rdrr.io/r/base/seq.html'>seq_along</a></span>(<span class='k'>lines_raw</span>),
-  pos = <span class='nf'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span>(<span class='k'>lines_raw</span>, <span class='k'>seq_along</span>)
+  pos = <span class='nf'>map</span>(<span class='k'>lines_raw</span>, <span class='k'>seq_along</span>)
 )
 
 <span class='k'>lines_tbl</span> <span class='o'>%&gt;%</span>
