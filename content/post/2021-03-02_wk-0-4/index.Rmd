@@ -1,0 +1,248 @@
+---
+title: "wk version 0.4.0!"
+subtitle: ""
+summary: ""
+authors: []
+tags: []
+categories: []
+date: 2021-03-02T20:37:02-04:00
+lastmod: 2021-03-02T20:37:02-04:00
+featured: false
+draft: false
+image:
+  caption: ""
+  focal_point: ""
+  preview_only: false
+projects: []
+output: hugodown::md_document
+---
+
+```{r setup, echo = FALSE}
+library(cpp11)
+library(wk)
+```
+
+About the time the COVID-19 pandemic began, I started getting interested in some low-level geometry programming in R. Around that time the [vctrs](https://vctrs.r-lib.org) package was starting to mature and [dplyr version 1.0.0](https://www.tidyverse.org/blog/2020/06/dplyr-1-0-0/) had just been released. In particular, vctrs provided a template for how a minimal but carefully-designed nuts-and-bolts framework can inspire an extensible ecosystem of packages enabling dplyr to continue doing all the useful stuff that users depend on. I was also struck by the fact that packages that implement a vctrs class (1) don't have to depend on vctrs and (2) work with dplyr *without either dplyr nor the package knowing anything about eachother*.
+
+The [sf package](https://r-spatial.github.io/sf) is truly awesome. I think of sf as the dplyr of spatial: it does all the *useful* stuff. But if sf is the dplyr, what would a vctrs of geometry in R look like? What are the nuts and bolts of geometry in R?
+
+I've [written](https://github.com/paleolimbot/geovctrs) and [rewritten](https://github.com/paleolimbot/wkutils) and [rewritten](https://fishandwhistle.net/post/2020/wk-package-preview/) a few versions of this over the last year: wk 0.4.0 is the convergence of the features I included in previous iterations and the lightweight-ness that I was hoping for. It all starts with:
+
+```{r}
+library(wk)
+```
+
+## Vector classes
+
+One concept that shows up on repeat in geometry/spatial packages is the concept of a "point". The vctrs package made this possible with [record-style vectors](https://vctrs.r-lib.org/articles/s3-vector.html#record-style-objects) that store data under the hood in something like a data frame. This is efficient in R because it involves few memory allocations (one per dimension) and few garbage collections (because there is only one object per dimension). Also, most points start out as vectors of x and y coordinates anyway, so including them in a record-style vector means a copy can sometimes be avoided. For thousands of points the difference is negligible. For millions of points, it starts to add up. In wk, you can construct these as `xy()`, `xyz()`, `xym()`, or `xyzm()` depending on your dimensions:
+
+```{r}
+(point <- xy(1:5, 1:5))
+```
+
+2D rectangles also show up on repeat in geometry/spatial packages as [sf's bounding box](https://r-spatial.github.io/sf/reference/st_bbox.html), raster's Extent, sp's bbox, terra's SpatExtent, base R's `xlim` and `ylim`, and I'm sure it's been implemented many other ways. In wk you can construct these using `rct()`:
+
+```{r}
+(rectangle <- rct(0, 0, 10, 5))
+```
+
+Circles are less common but they can be difficult to represent. Often they are approximated as a polygon with some number of segments around the outside, but this looses some precision depending on how many points the author thought would be a reasonable approximation. In wk you can create these using `crc()`:
+
+```{r}
+(circle <- crc(0, 0, 10))
+```
+
+Geometric primitives are all well and good, but the package would be useless without a way to represent lines, polygons, and collections thereof. For these, the `wkb()` and `wkt()` classes are provided: they mark a `list()` of `raw()` (well-known binary) or character vector (well-known text) as containing geometry so that they can be printed, plotted, and combined accordingly. WKB and WKT also show up on repeat: most software libraries used in geometry processing have a way to export or import WKT or WKB.
+
+```{r}
+(text <- wkt("POINT (30 20)"))
+(binary <- as_wkb("POINT (30 20)"))
+```
+
+Vector classes matter because they contain just enough information to relate them to other geometry vectors. This means that if you have some function that returns a geometry, you should be able to return the simplest possible thing and rely on the casting/concatenation rules to do the right thing if the user needs to combine these with something returned by another function. Using the objects we created above:
+
+```{r}
+vctrs::vec_c(text, binary)
+vctrs::vec_c(rectangle, binary)
+vctrs::vec_c(circle, binary)
+vctrs::vec_c(circle, point)
+```
+
+Missing from these examples are the segment and the triangle, which should probably exist in the wk package or elsewhere. If it turns out wk actually sees some use, they will likely be added to a future version.
+
+## sf support
+
+The sf package has classes for many of these concepts. In particular, `sf::st_sfc()` is a vector (and vctr) of geometries just like `wkb()` and `wkt()`. At the time of this writing, casting and concatenation don't work with vectors from wk (but will in the future!). You can always use `as_*()` and `sf::st_as_sfc()` to work around this:
+
+```{r}
+(circle_sf <- sf::st_as_sfc(circle))
+```
+
+## Low-level extensibility
+
+The wk package manages coercion among its many vector types using a ~100-line header that defines a "handler". This handler responds to bits of geometric information as they are encountered by the "reader". Thus, the wk package contains readers and handlers for all of its vector classes and links them together to perform each set of conversions. This architecture was a huge step forward in this release: [before](https://fishandwhistle.net/post/2020/wk-package-preview/), these readers and handlers were "header-only", which meant a lot of duplicated compiling and the need for "handlers" to decide in advance which vector classes they were going to support. In the new release these concerns are fully separated: readers read, handlers handle, neither needs to know that the other exists. For those keen, there is a [new vignette](https://paleolimbot.github.io/wk/dev/articles/articles/programming.html) describing the philosophy of readers, handlers, filters, and how to write them in C and C++.
+
+It should be noted that the zero-alloc reader/handler thing isn't a new concept - this type of framework has been [written in Rust](https://github.com/georust/geozero/) and includes many more readers and handlers. In comparison to the Rust version, wk's framework is focused on simplicity and commits to R as the language in which the objects should be interacted with. With the [extendr crate](https://github.com/extendr/extendr) it might be possible to link these together! Very cool, but a battle for another day.
+
+## High-level extensibility
+
+The C/C++-level extensibility in the latest version is not useful without an R-level interface allowing the user to mix and match readers, filters, and handlers. The `wk_handle()` generic takes care of selecting the proper reader for a given object; various `*_handler()` constructors make fresh handler objects that generate a result. For example, the `wk_bbox_handler()` can be run with all of the geometry vector types we defined above:
+
+```{r}
+wk_handle(point, wk_bbox_handler())
+wk_handle(binary, wk_bbox_handler())
+wk_handle(circle_sf, wk_bbox_handler())
+```
+
+The `wk_handle()` method is probably not useful for users but does allow developers to create functions that support a wide variety of inputs. For example, it is more likely that a user might use `wk_bbox()` (which was written using this pattern) to achieve the above result:
+
+```{r}
+wk_bbox(point)
+wk_bbox(circle_sf)
+```
+
+In addition to vectors of geometries, there is a `wk_handle()` method for data frames and tibbles. This means that, like sf objects are data frames with sfc vectors, any data.frame that contains exactly one handleable column can be used interchangeably with its geometry column:
+
+```{r}
+wk_bbox(data.frame(xy = point))
+```
+
+To facilitate transformations, `wk_restore()` is provided to reconcile the transformed geometry with the original object. The only built-in transformation is the `wk_identity()`, which is mostly provided to test this pattern:
+
+```{r}
+xy_tbl <- tibble::tibble(xy = point)
+wk_restore(wk_handle(xy_tbl, xy_writer()), xy_tbl)
+```
+
+## Coordiniate Reference System propagation
+
+Technically the ability to attach, propagate, and check consistency of CRS objects could be delegated to a future package that makes "spatial-aware" versions of the classes in wk. However, coordinate reference systems aren't just a spatial phenomenon: graphics devices in R define several of them as well (user, device, normalized). Also, without a framework to deal with coordinate reference systems, developers would have to import *another* package. The latest wk release attempts to deal with CRS objects without knowing anything about them, delegating detection of equality via the `wk_crs_equal_generic()` S3 generic. This allows code like the following to work:
+
+```{r}
+vctrs::vec_c(
+  xy(1, 0, crs = 4326), 
+  rct(0, 2, 3, 4, crs = sf::st_crs(4326))
+)
+```
+
+
+...and code like this to fail:
+
+```{r, error=TRUE}
+vctrs::vec_c(
+  xy(1, 0, crs = 4327), 
+  rct(0, 2, 3, 4, crs = sf::st_crs(4326))
+)
+```
+
+A special value, `wk_crs_inherit()`, can be used to inherit the coordinate system of whatever it is combined with:
+
+```{r}
+vctrs::vec_c(xy(1, 0, crs = 4327), xy(NA, NA, crs = wk_crs_inherit()))
+```
+
+CRS objects can be anything and are not validated until they need to be compared with another CRS object during concatenation or a binary operation. This framework is experimental but was designed to facilitate the fewest number of coercion between CRS objects as this can lead to loss of information.
+
+## A few useful handlers
+
+In order to test that the handlers and readers work as intended, a few useful handlers live in the wk package and were added as R-level functions in the latest release. The `wk_meta()` function gives vector-level and feature-level meta information for any object with a `wk_handle()` method:
+
+```{r}
+wk_vector_meta(circle_sf)
+wk_meta(circle_sf)
+```
+
+The `wk_format()` function gives a truncated version of the WKT (that is very fast as it never involves parsing the entire geometry!)
+
+```{r}
+wk_format(circle_sf)
+```
+
+Finally, the `wk_bbox()` function gives the 2D cartesian bounding box (min/max of all coordinates):
+
+```{r}
+wk_bbox(circle_sf)
+```
+
+## A motivating example
+
+Let's say you had a big shapefile of points and wanted to read in the values as a matrix to do some processing. My example here is about 11 million points of XYZ representing the [Nova Scotia Digital Terrain Model](https://nsgi.novascotia.ca/gdd/). The current fastest way to do that (probably) is using [mdsumner](https://github.com/mdsumner/)'s [vapour](https://cran.r-project.org/package=vapour) package (which is a lightweight interface to GDAL), read into sf format without assigning class attributes, then extract the coordinates. The whole process involves some off-label usage of sf to skip some unnecessary slow bits.
+
+```{r}
+big_shp_file <- "~/Desktop/BASE_DTM_Points_SHP_UT83v3_CGVD28/LF_DTM_POINT_10K.shp"
+
+bench::mark(expr = {
+  big_wkb <- vapour::vapour_read_geometry(path.expand(big_shp_file))
+  big_sf_bare <- sf:::CPL_read_wkb(big_wkb)
+  big_matrix <- sf::st_coordinates(structure(big_sf_bare, class = c("sfc_POINT", "sfc")))
+})
+
+head(big_matrix)
+```
+
+In the wk framework, the steps are to (1) pick your data source, then (2) pick your handler. The package includes a data structure that closely matches a matrix (the `xyz()` vector class) and handler to write it (the `xy_writer()`). To test my theory I wrote a [proof-of-concept shapefile reader](https://github.com/paleolimbot/shp) and found that this can be done about 10 times faster.
+
+```{r}
+library(shp)
+
+bench::mark(expr = {
+  big_xy <- wk_handle(
+    shp_geometry(big_shp_file),
+    xy_writer()
+  )
+  
+  big_matrix2 <- as.matrix(big_xy)
+})
+
+head(big_matrix2)
+```
+
+The exciting bit for me is the flexibility: you can just as easily read to WKB...
+
+```{r}
+big_wkb <- wk_handle(
+  shp_geometry(big_shp_file),
+  wkb_writer()
+)
+```
+
+...or sf...
+
+```{r}
+big_sf <- wk_handle(
+  shp_geometry(big_shp_file),
+  sfc_writer()
+)
+```
+
+...without changing any compiled code. 
+
+Handlers aren't limited to writing geometry vectors: some of the more compelling uses for them are calculations like a bounding box that require iterating through every coordinate but don't need to allocate memory for all of them at once. This is really fast, since allocation can become limiting once the size of the data gets big enough.
+
+```{r}
+system.time(
+  big_bbox <- wk_handle(
+    shp_geometry(big_shp_file),
+    wk_bbox_handler()
+  )
+)
+
+big_bbox
+```
+
+Another compelling use-case is applying transformations to a really big data set. If you wanted to do a projection, affine transformation, or simplification (or all three!), you could write filters that do this one coordinate at a time and string them together. The only filter implemented in the wk package is the `wk_identity_filter()` but it's enough to demonstrate the idea:
+
+```{r}
+system.time({
+  big_filtered <- wk_handle(
+    shp_geometry(big_shp_file),
+    wk_identity_filter(wk_identity_filter(wk_identity_filter(xy_writer())))
+  )
+})
+```
+
+In this example, the filters are operating one coordinate at a time, rather than functions applied on a sequence of copies. The syntax leaves something to be desired, but that's the (future) job of some package other than wk!
+
+## Acknowledgements
+
+I have to thank the [#rstats Twitter family](https://twitter.com/hashtag/rstats) for serving as my outlet as I developed various versions of this over the last year. In particular, conversations with [edzer](https://github.com/edzer/), [mdsumner](https://github.com/mdsumner/), and [dcooley](https://github.com/dcooley/) formed the basis for wk. There are few features of wk that some combination of [edzer](https://github.com/edzer/), [mdsumner](https://github.com/mdsumner/), and/or [dcooley](https://github.com/dcooley/) have not implemented better somewhere else.
