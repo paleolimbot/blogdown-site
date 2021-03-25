@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Machine Learning for Water Management</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Dewey W. Dunnington" />
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/default-fonts.css" rel="stylesheet" />
+    <link rel="stylesheet" href="presentation.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: title-slide, middle, title-slide
+
+# Machine Learning for Water Management
+### Dewey W. Dunnington
+### Centre for Water Resources Studies<br/>Dalhousie University<br/><br/><a href="https://fishandwhistle.net/slides/cawq2021">https://fishandwhistle.net/slides/cawq2021</a><br/><br/><span class="citation">@paleolimbot</span> on <a href="https://twitter.com/paleolimbot">Twitter</a> and <a href="https://github.com/paleolimbot">GitHub</a>
+
+---
+
+
+
+
+![](figs/paper.png)
+
+.footnote[
+Dunnington et al. (2020) https://doi.org/10.1021/acsestengg.0c00053
+]
+
+---
+
+&lt;iframe src="https://paleolimbot.shinyapps.io/edwards97/" style="width: 100%; height: 550px; border: none;"&gt;&lt;/iframe&gt;
+
+.footnote[
+https://paleolimbot.shinyapps.io/edwards97/
+]
+
+---
+class: center, middle, inverse
+
+# The Utility of the Hypothetical
+
+---
+class: center, middle
+
+
+```
+## # A tibble: 500 x 6
+##    coagulant   DOC  dose    pH  UV254 DOC_final
+##    &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;
+##  1 Alum       1.8  0.416  6.03 0.026       1.03
+##  2 Alum       1.8  0.446  5.85 0.026       1.08
+##  3 Alum       1.8  0.292  6.26 0.026       1.08
+##  4 Alum       2.56 0.471  4.9  0.0900      1.08
+##  5 Alum       1.8  0.354  6.19 0.026       1.1 
+##  6 Alum       1.8  0.385  6.05 0.026       1.16
+##  7 Alum       1.8  0.229  6.52 0.026       1.17
+##  8 Alum       1.8  0.197  6.63 0.026       1.18
+##  9 Alum       2.56 0.168  6.1  0.0900      1.19
+## 10 Alum       2.56 0.337  6    0.0900      1.2 
+## # … with 490 more rows
+```
+
+---
+class: center, middle
+
+&lt;img src="figs/paper-compare-full.png" style="height: 550px" /&gt;&lt;img src="figs/paper-compare-full-lab.png" style="height: 550px" /&gt;
+
+.footnote[
+Dunnington et al. (2020) https://doi.org/10.1021/acsestengg.0c00053
+]
+
+---
+class: center, middle, inverse
+
+# Machine learning can make really good predictions if you have a lot of data*
+
+---
+class: center, middle, inverse
+
+# Water managers have a *lot* of data*
+
+---
+class: center, middle
+
+![](figs/dog_cat.png)
+
+.footnote[
+https://www.kaggle.com/c/dogs-vs-cats/data ([image source](https://blog.usejournal.com/why-deep-learning-works-differently-than-we-thought-ec28823bdbc))
+]
+
+---
+class: center, middle
+
+![](figs/cat_prob.png)
+
+.footnote[
+https://www.kaggle.com/c/dogs-vs-cats/data ([image source](https://blog.usejournal.com/why-deep-learning-works-differently-than-we-thought-ec28823bdbc))
+]
+
+---
+class: center, middle
+
+
+```
+## # A tibble: 500 x 6
+##    coagulant   DOC  dose    pH  UV254 DOC_final
+##    &lt;chr&gt;     &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;     &lt;dbl&gt;
+##  1 Alum       1.8  0.416  6.03 0.026       1.03
+##  2 Alum       1.8  0.446  5.85 0.026       1.08
+##  3 Alum       1.8  0.292  6.26 0.026       1.08
+##  4 Alum       2.56 0.471  4.9  0.0900      1.08
+##  5 Alum       1.8  0.354  6.19 0.026       1.1 
+##  6 Alum       1.8  0.385  6.05 0.026       1.16
+##  7 Alum       1.8  0.229  6.52 0.026       1.17
+##  8 Alum       1.8  0.197  6.63 0.026       1.18
+##  9 Alum       2.56 0.168  6.1  0.0900      1.19
+## 10 Alum       2.56 0.337  6    0.0900      1.2 
+## # … with 490 more rows
+```
+
+---
+class: center, middle
+
+![](figs/bwa.png)
+
+.footnote[
+https://www.cbc.ca/news/canada/windsor/boil-water-advisory-lasalle-1.3771975
+]
+
+---
+class: center, middle, inverse
+
+# If ML is so good at predicting, why isn't it used all the time in the water industry?
+
+---
+class: center, middle
+
+![](figs/cat_prob.png)
+
+---
+class: center, middle
+
+![](figs/bwa.png)
+
+.footnote[
+https://www.cbc.ca/news/canada/windsor/boil-water-advisory-lasalle-1.3771975
+]
+
+---
+class: center, middle, inverse
+
+# Water managers need to know *why*
+
+---
+class: center, middle, inverse
+
+# (Most) Water managers can't do "machine learning"
+
+---
+class: center, middle, inverse
+
+# (All) Water managers *can* do "machine learning"
+
+---
+class: center, middle
+
+&lt;img src="figs/paper-compare-full.png" style="height: 550px" /&gt;&lt;img src="figs/paper-compare-full-lab.png" style="height: 550px" /&gt;
+
+.footnote[
+Dunnington et al. (2020) https://doi.org/10.1021/acsestengg.0c00053
+]
+
+---
+
+
+```r
+library(edwards97) # install.packages("edwards97")
+tests &lt;- edwards_data("Al")
+fit &lt;- fit_edwards_optim(tests, initial_coefs = edwards_coefs("Al"))
+predicted &lt;- predict(fit, tests)
+plot(tests$DOC_final, predicted)
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-3-1.png" style="display: block; margin: auto;" /&gt;
+
+.footnote[
+https://paleolimbot.github.io/edwards97/
+]
+
+---
+
+
+```r
+fit &lt;- lm(DOC_final ~ DOC + dose + pH + UV254, data = tests)
+plot(tests$DOC_final, predict(fit))
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-4-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+
+![](figs/tidymodels.png)
+
+.footnote[
+https://tidymodels.org/
+]
+
+---
+
+
+```r
+library(tidymodels)
+
+xgb_spec &lt;- boost_tree(
+  trees = 1000, tree_depth = 7, min_n = 9,
+  loss_reduction = 7.26e-10, sample_size = 0.69,
+  mtry = 5, learn_rate = 0.02
+) %&gt;% 
+  set_engine("xgboost") %&gt;% 
+  set_mode("regression")
+
+xgb_fit &lt;- workflow() %&gt;%
+  add_formula(DOC_final ~ DOC + dose + pH + UV254) %&gt;%
+  add_model(xgb_spec) %&gt;% 
+  fit(tests)
+```
+
+.footnote[
+https://juliasilge.com/blog/xgboost-tune-volleyball/
+]
+
+---
+
+
+```r
+plot(tests$DOC_final, predict(xgb_fit, tests)[[1]])
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-7-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+
+```r
+nnet_spec &lt;- mlp(penalty = 1e-5) %&gt;% 
+  set_engine("nnet") %&gt;% 
+  set_mode("regression")
+
+rec &lt;- recipe(DOC_final ~ DOC + dose + pH + UV254, data = tests) %&gt;% 
+  step_center(DOC, dose, pH, UV254) %&gt;% 
+  step_scale(DOC, dose, pH, UV254) %&gt;% 
+  step_pca(DOC, dose, pH, UV254)
+  
+
+nnet_fit &lt;- workflow() %&gt;%
+  add_recipe(rec) %&gt;%
+  add_model(nnet_spec) %&gt;% 
+  fit(tests)
+```
+
+---
+
+
+```r
+plot(tests$DOC_final, predict(nnet_fit, tests)[[1]])
+```
+
+&lt;img src="presentation_files/figure-html/unnamed-chunk-9-1.png" style="display: block; margin: auto;" /&gt;
+
+---
+
+![](figs/paper.png)
+
+.footnote[
+Dunnington et al. (2020) https://doi.org/10.1021/acsestengg.0c00053
+]
+
+---
+
+# Acknowledgements
+
+- William Raseman (Hazen and Sawyer), Ben Trueman, Lindsay Anderson
+
+&lt;!-- water studies/dal logos --&gt;
+.figure-dal[
+&lt;img src="logos/water-studies.png" width="683" style="display: block; margin: auto;" /&gt;&lt;img src="logos/dalhousie.png" width="403" style="display: block; margin: auto;" /&gt;
+]
+
+&lt;!-- partner logos ---&gt;
+
+.figure-partner[
+&lt;img src="logos/nserc.png" width="407" style="display: block; margin: auto;" /&gt;&lt;img src="logos/halifax-water.png" width="105" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbrm-water-utility.png" width="255" style="display: block; margin: auto;" /&gt;&lt;img src="logos/moncton.png" width="114" style="display: block; margin: auto;" /&gt;&lt;img src="logos/agat.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/mantech.png" width="320" style="display: block; margin: auto;" /&gt;&lt;img src="logos/cbcl.png" width="275" style="display: block; margin: auto;" /&gt;&lt;img src="logos/luminultra.png" width="301" style="display: block; margin: auto;" /&gt;&lt;img src="logos/aquisense.png" width="254" style="display: block; margin: auto;" /&gt;
+]
+
+.footnote[
+Slides created using [xaringan](https://github.com/yihui/xaringan), [remark.js](https://remarkjs.com), [knitr](http://yihui.name/knitr), and [R Markdown](https://rmarkdown.rstudio.com).
+]
+
+---
+class: center
+
+# Questions?
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+  </body>
+</html>
