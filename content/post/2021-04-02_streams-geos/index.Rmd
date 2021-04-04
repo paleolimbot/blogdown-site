@@ -1,0 +1,323 @@
+---
+title: "Stream networks using R and GEOS"
+subtitle: ""
+summary: ""
+authors: []
+tags: []
+categories: []
+date: 2021-04-01T20:37:02-04:00
+lastmod: 2021-04-01T20:37:02-04:00
+featured: false
+draft: false
+image:
+  caption: ""
+  focal_point: ""
+  preview_only: false
+projects: []
+output: hugodown::md_document
+---
+
+```{r setup, echo = FALSE}
+library(sf)
+library(geos)
+```
+
+Almost exactly a year ago I wrote a [post on using R and sf to work with stream networks](/post/2020/stream-networks-using-r-and-sf/). The post was about low-level analysis with the [Nova Scotia stream network](https://nsgi.novascotia.ca/gdd/) to find upstream networks of various lakes so that I could approximate the catchments without a province-wide DEM analysis.
+
+If you read the post, you'll realize that it's not just you, it's a tiny bit awkward to work with some of these low-level details. I wrote that post early pandemic and spent a good part of the next few months working on the [geos package](https://github.com/paleolimbot/geos/), which interacts with GEOS (which also powers much of sf) at a lower level and exposes some really nice functions for doint nuts-and-bolts geometry work. I'm in the process of preparing the [libgeos 3.9.1-1](https://github.com/paleolimbot/libgeos/issues/7) and [geos 0.1.0](https://github.com/paleolimbot/geos/issues/38) release, and thought I'd revisit the idea of stream network analysis to see if I can make the analysis a little less awkward.
+
+I'll start with the same example data I used in the last post, loaded with the trusty [sf package](https://r-spatial.github.io/sf).
+
+```{r}
+library(sf)
+library(geos)
+
+lakes_sf <- read_sf("lakes.shp")
+rivers_sf <- read_sf("rivers.shp")
+```
+
+## A pure geos approach
+
+Because I'm testing the geos package, I'm going to convert the objects to `geos_geometry()` right away (all `geos_*()` functions call `as_geos_geometry()` internally, too, if you ever want to save a step in a one-off calculation). If you inspect the rivers geometry you'll notice that the rivers geometry is a `MULTILINESTRING`. For what we're about to do we need to use the fact that the start point of one river segment is the end point of another, and so we need to break the linestrings out of their containers. In sf you'd do `st_cast(, "LINESTRING")`. In geos you can use `geos_unnest()`, which has nothing to do with the sf spec but provides some options for dealing with (potentially nested) collections.
+
+```{r}
+lakes <- as_geos_geometry(lakes_sf)
+rivers <- as_geos_geometry(rivers_sf) %>% 
+  geos_unnest(keep_multi = FALSE)
+```
+
+The test lake I'll use is East Lake, near Dartmouth, Nova Scotia.
+
+```{r}
+east_lake <- lakes[4]
+
+plot(lakes, col = "grey80", border = NA)
+plot(rivers, lwd = 0.5, add = T)
+plot(east_lake, col = NA, border = "red", add = T)
+```
+
+The big difference between the sf approach I used in the previous post and the geos approach in this one is the use of `geos_point_start()` and `geos_point_end()` to extract the start and end points of each river segment. Along with `geos_point_n()`, `geos_project()`, and `geos_interpolate()`, there are some useful functions for dealing with lineal geometries. This stream network is defined such that the upstream segment can be found by looking for a segment where the end point is the start point of the one you're interested in. It seems tiny, but the `geos_point_start()` and `geos_point_end()` make the process much cleaner. We can cache these because we're going to refer to them frequently.
+
+```{r}
+river_start <- geos_point_start(rivers)
+river_end <- geos_point_end(rivers)
+
+plot(rivers[1])
+plot(river_start[1], add = T, col = "blue")
+plot(river_end[1], add = T, col = "red")
+```
+
+Because we're going to look up end points repeatedly (maybe millions of times), we're going to build an [R-tree index](https://en.wikipedia.org/wiki/R-tree) on the end points of all the segments and use the `*_matrix()` predicates to search.
+
+```{r}
+river_end_index <- geos_strtree(river_end)
+river_start_index <- geos_strtree(river_start)
+```
+
+If you've spent time working with binary predicates like `st_intersects()` in sf, you'll be familiar with the return type: a `list()` where each item in the list refers to the query features and the indices in each item refer to position in index. For example, to find the positions of the river end points that intersect our sample lake, you could do the following:
+
+```{r}
+geos_intersects_matrix(east_lake, river_end_index)
+```
+
+To get the actual end points you'd need to do `river_end[c(146, 66, ...)]`, but in our case we don't really care about the end points, we're using the positions to identify `river_start`, `rivers`, or `river_end` depending on what we need to do next.
+
+Identifying inlets and outlets is also slightly easier knowing the start and end points of a segment: if a segment has its start point inside the lake, it's an outlet. Nova Scotia is a great case to test edge cases here because many lakes have more than one outlet and the river network is a little screwy as a result (many lakes in the interior of the province flow more than one direction depending on where the power company wants to send it...try encoding *that* in a shapefile). Also complicating things is that the river and lake files are slightly misaligned (about 0.5 m difference depending on where you are in the province). For East Lake, the simple start/end segment thing works (we'll revisit how to get around the  0.5 m difference thing in a bit).
+
+```{r}
+east_lake_inlet_which <- setdiff(
+  geos_touches_matrix(east_lake, river_end_index)[[1]],
+  geos_contains_matrix(east_lake, river_start_index)[[1]]
+)
+
+plot(east_lake)
+plot(rivers[east_lake_inlet_which], add = T)
+plot(river_end[east_lake_inlet_which], add = T)
+```
+
+A final detail is that we can cache the upstream segment lookup for every segment in the data set. This takes a barely noticeable amount of space and time even for the entire data set (250,000 segments). You can do this in sf (`st_equals()`) and s2 (`s2_equals_matrix()`) as well; both use indexes to compute the result efficiently for large data sets.
+
+```{r}
+upstream_lookup <- geos_equals_matrix(river_start, river_end_index)
+```
+
+(Note: I'm using the pre-computed index here but you can pass any object with an `as_geos_geometry()` method as the index if you don't need to save it. Computing the index doesn't take very long even for big data sets, so unless you're running code in a loop this is probably what you want to do).
+
+Finally, we can define our recursive upstream segment finder. Getting the recursion right took a few tries, but the main idea is that the upstream segment from the current segment is the one whose end point is the current segment's start point. Here `seg_which` is a vector of positions and upstream direct is a `list()` (hence the `unlist()` and `lapply()`).
+
+```{r}
+upstream_segments <- function(seg_which, lookup = upstream_lookup, recursive_limit = 100) {
+  if (recursive_limit <= 0) {
+    message("Recursion limit reached")
+    return(numeric())
+  }
+  
+  upstream_direct <- lookup[seg_which]
+  
+  c(
+    unlist(upstream_direct), 
+    unlist(
+      lapply(
+        upstream_direct,
+        upstream_segments,
+        lookup = lookup,
+        recursive_limit = recursive_limit - 1
+      )
+    )
+  )
+}
+```
+
+Let's look up the inlet network for East Lake!
+
+```{r}
+east_lake_inlet_network_which <- c(
+  east_lake_inlet_which,
+  upstream_segments(east_lake_inlet_which)
+)
+
+plot(rivers[east_lake_inlet_network_which])
+plot(east_lake, add = T)
+```
+
+Cool! With that under our belt, let's see if the approach scales to the whole network. Again, we'll use sf to read in our shapefiles.
+
+```{r}
+rivers_ns_sf <- read_sf("~/Dropbox/delineatens/dem/streams.shp")
+lakes_ns_sf <- read_sf("~/Dropbox/delineatens/dem/lakes.shp") %>% 
+  st_transform(st_crs(rivers_ns_sf))
+```
+
+Like above, we'll compute the start and end points and the `geos_geometry()` version of the lakes and rivers. Also we'll compute the indexes because we're going to compute some predicates values in a loop. Of this, `geos_unnest()` is the only noticeable slowdown (as we'll see below, using `st_cast("LINESTRING")` is much faster).
+
+```{r}
+lakes_ns <- as_geos_geometry(lakes_ns_sf)
+rivers_ns <- rivers_ns_sf %>% 
+  as_geos_geometry() %>% 
+  geos_unnest(keep_multi = FALSE, keep_empty = TRUE)
+
+river_start_ns <- geos_point_start(rivers_ns)
+river_end_ns <- geos_point_end(rivers_ns)
+
+rivers_index_ns <- geos_strtree(rivers_ns)
+river_start_index_ns <- geos_strtree(river_start_ns)
+river_end_index_ns <- geos_strtree(river_end_ns)
+
+upstream_lookup_ns <- geos_equals_matrix(river_start_ns, river_end_index_ns)
+```
+
+I mentioned above that we need a slightly different approach to compute the inlets and outlets when the lakes and rivers layer aren't quite aligned (normally there is a segment start/end at the edge of the lake). The differernce in our case is about 0.5 m, which I suspect has to do with the NAD83/WGS84 projection difference with updated PROJ. In any case, the approach we used for East Lake doesn't scale to the whole data set. What we really need is `st_is_within_distance()` or `s2_dwithin_matrix()` (which will probably be included in the upcoming or a future geos release). An important consideration is that buffering the lake is not an option: the biggest lake in the province takes 8 seconds to buffer (compared to 1 second to compute the entire upstream network!). My approach here is to find the places where the stream network intersects the boundary and then find the nearest segment end point to that. This fails where two streams enter a lake at the same point (which happens in this data set); I'll demo the combined sf-geos approach below that makes this more robust.
+
+```{r}
+lake <- lakes_ns[399]
+lake_boundary <- geos_boundary(lake)
+lake_inlet_outlet_which <- geos_intersects_matrix(lake_boundary, rivers_index_ns)[[1]]
+lake_inlet_outlet_pt <- geos_intersection(rivers_ns[lake_inlet_outlet_which], lake_boundary)
+lake_inlet_outlet_which <- geos_nearest(lake_inlet_outlet_pt, river_end_index_ns)
+
+lake_inlet_which <- setdiff(
+  lake_inlet_outlet_which,
+  geos_contains_matrix(lake, river_start_index_ns)[[1]]
+)
+
+plot(lakes_ns[399])
+plot(river_end_ns[lake_inlet_which], add =  T)
+plot(rivers_ns[lake_inlet_outlet_which], col = "blue", add = T)
+```
+
+We can functionify this so that we can `lapply()` along the entire lakes data set using our `upstream_segments()` function with our much bigger upstream lookup table.
+
+```{r}
+lake_upstream_segments <- function(lake) {
+  lake_boundary <- geos_boundary(lake)
+  lake_inlet_outlet_which <- geos_intersects_matrix(lake_boundary, rivers_index_ns)[[1]]
+  lake_inlet_outlet_pt <- geos_intersection(rivers_ns[lake_inlet_outlet_which], lake_boundary)
+  lake_inlet_outlet_which <- geos_nearest(lake_inlet_outlet_pt, river_end_index_ns)
+  
+  lake_inlet_which <- setdiff(
+    lake_inlet_outlet_which,
+    geos_contains_matrix(lake, river_start_index_ns)[[1]]
+  )
+  
+  c(
+    lake_inlet_which,
+    upstream_segments(
+      lake_inlet_which,
+      lookup = upstream_lookup_ns,
+      recursive_limit = 5000
+    )
+  )
+}
+
+test_segments <- unique(lake_upstream_segments(lakes_ns[399]))
+plot(rivers_ns[test_segments])
+plot(lakes_ns[399], col = NA, border = "red", add = T)
+```
+
+I picked this lake because I happen to know a bit about the drainage network. But does it work for a bigger, more complicated lake? (Shown: Lake Rossignol, the biggest lake in the province).
+
+```{r}
+test_segments <- unique(lake_upstream_segments(lakes_ns[226]))
+plot(rivers_ns[test_segments])
+plot(lakes_ns[226], col = NA, border = "red", add = T)
+```
+
+In the earlier post I noted that the largest network in the province could be calculated in 10 seconds and that the whole province could be analyzed in under an hour. At the time I was pretty excited about this. The above code can compute the biggest network in the province in 0.1 seconds and can analyze my 650-lake data set in about 3 seconds:
+
+```{r}
+system.time(lapply(lakes_ns, lake_upstream_segments))
+```
+
+##  A pure sf approach
+
+The insane speed difference I just quoted has little to do with sf or geos and more to do with the fact that I didn't really know what I was doing when I wrote the last post. Knowing what I do now, let's see how fast I can make sf do the same thing. We've already read the data into sf form, but we need to break the stream segments out of their multi-geometry container. As I noted above, `st_cast()` is usually much faster than `geos_unnest()` (5 seconds vs. 20 seconds).
+
+```{r}
+rivers_ns_sf_line <- st_cast(rivers_ns_sf, "LINESTRING")
+```
+
+The start/end point thing is a bit awkward. If I weren't trying to avoid the geos package on purpose here I'd just do `geos_point_(start|end)() %>% st_as_sf()`; however, for the purposes of this post, I'm going to stick to sf. In my previous post I used `st_cast(, "POINT")`, but this is really slow (3 minutes) for all of Nova Scotia. We only need to resolve two points from each segment, not all of them, so we can use the internal structure of the sf linestring (a matrix) to extract the first and last coordinate. All together this is about 20 seconds (it's about 0.2 seconds with  `geos_point_start()` + `geos_point_end()`).
+
+```{r}
+rivers_ns_sf_start <- lapply(
+  rivers_ns_sf_line$geometry, 
+  function(x) st_point(x[1, , drop = FALSE])
+) %>% 
+  st_as_sfc(crs = st_crs(rivers_ns_sf_line))
+
+rivers_ns_sf_end <- lapply(
+  rivers_ns_sf_line$geometry, 
+  function(x) st_point(x[nrow(x), , drop = FALSE])
+) %>% 
+  st_as_sfc(crs = st_crs(rivers_ns_sf_line))
+```
+
+Creating the segment lookup table is similar in speed and syntax to `geos_equals_matrix()`:
+
+```{r}
+upstream_lookup_sf <- st_equals(rivers_ns_sf_start, rivers_ns_sf_end)
+```
+
+I talked a big game earlier about how using `st_is_within_distance()` would be nice for the purposes of solving the slight difference between the lake and river layers. It turns out that's pretty slow (for the big lake, Lake Rossignol, it took about 30 seconds) and so I didn't do it here as it would wreck the comparison. The only difference here is that I pre-compute the binary predicates because there is no index that we can query on repeat and rebuilding it for each lake takes about 5 seconds (for comparison, computing the network for Lake Major less than half a second).
+
+```{r}
+lake_boundary_sf <- st_boundary(lakes_ns_sf$geometry)
+lake_not_inlet_sf <- st_intersects(lakes_ns_sf$geometry, rivers_ns_sf_start)
+lake_maybe_inlet <- st_intersects(lake_boundary_sf, rivers_ns_sf_line)
+
+lake_inlet_outlet_pt <- st_intersection(
+  rivers_ns_sf_line$geometry[lake_maybe_inlet[[399]]], 
+  lake_boundary_sf[399]
+)
+
+lake_inlet_which <- setdiff(
+  st_nearest_feature(lake_inlet_outlet_pt, rivers_ns_sf_end),
+  lake_not_inlet_sf[[399]]
+)
+
+plot(lakes_ns_sf$geometry[399])
+plot(rivers_ns_sf_end[lake_inlet_which], add = T)
+```
+
+If you'll look at `upstream_segments()` you'll notice that it doesn't work with geometry at all (just the lookup table), so we can re-use it with the sf-derived lookups and our inlet/outlet code from above.
+
+```{r}
+lake_upstream_segments_sf <- function(lake_id) {
+  lake_inlet_outlet_pt <- st_intersection(
+    rivers_ns_sf_line$geometry[lake_maybe_inlet[[lake_id]]], 
+    lake_boundary_sf[lake_id]
+  )
+  
+  lake_inlet_which <- setdiff(
+    st_nearest_feature(lake_inlet_outlet_pt, rivers_ns_sf_end),
+    lake_not_inlet_sf[[lake_id]]
+  )
+  
+  c(
+    lake_inlet_which,
+    upstream_segments(
+      lake_inlet_which,
+      lookup = upstream_lookup_sf,
+      recursive_limit = 5000
+    )
+  )
+}
+
+test_segments <- unique(lake_upstream_segments_sf(399))
+plot(rivers_ns_sf_line$geometry[test_segments])
+plot(lakes_ns_sf$geometry[399], col = NA, border = "red", add = T)
+```
+
+On the big network we looked at earlier it generates the same network and takes ~1.7 seconds.
+
+```{r}
+test_segments <- unique(lake_upstream_segments_sf(226))
+plot(rivers_ns_sf_line$geometry[test_segments])
+plot(lakes_ns_sf$geometry[226], col = NA, border = "red", add = T)
+```
+
+I imagine there's some variability in the final timing, but I can get through all the lakes in about 6 minutes locally. Far better than my quote of an hour!
+
+## How I'd actually do it
+
+In both approaches I was being a purist to see if there was any point to using geos for something like this. It's the use case I imagined when I wrote it: where you want to do a lot of nuts-and-bolts calculations in a loop. If I were doing this in real life today I'd use a mix of sf, s2, and geos, since they're all really good at various parts of the calculation. As of this writing `s2_dwithin()` is a still too slow to be useful here and I haven't quite found the solution I'd like for the inlet/outlet thing (probably I'd use something like `geos_set_precision()` to put all vertices on a common grid).
