@@ -15,19 +15,13 @@ image:
   preview_only: false
 projects: []
 output: hugodown::md_document
-rmd_hash: d9844512db0f5e53
+rmd_hash: 89101b394bc2b8dd
 
 ---
 
-<div class="highlight">
-
-<pre class='chroma'><code class='language-r' data-lang='r'><span class='c'>#&gt; Linking to GEOS 3.8.1, GDAL 3.1.2, PROJ 7.1.0</span></code></pre>
-
-</div>
-
 Almost exactly a year ago I wrote a [post on using R and sf to work with stream networks](/post/2020/stream-networks-using-r-and-sf/). The post was about low-level analysis with the [Nova Scotia stream network](https://nsgi.novascotia.ca/gdd/) to find upstream networks of various lakes so that I could approximate the catchments without a province-wide DEM analysis.
 
-If you read the post, you'll realize that it's not just you, it's a tiny bit awkward to work with some of these low-level details. I wrote that post early pandemic and spent a good part of the next few months working on the [geos package](https://github.com/paleolimbot/geos/), which interacts with GEOS (which also powers much of sf) at a lower level and exposes some really nice functions for doint nuts-and-bolts geometry work. I'm in the process of preparing the [libgeos 3.9.1-1](https://github.com/paleolimbot/libgeos/issues/7) and [geos 0.1.0](https://github.com/paleolimbot/geos/issues/38) release, and thought I'd revisit the idea of stream network analysis to see if I can make the analysis a little less awkward.
+If you read the post, you'll realize that it's not just you, it's a tiny bit awkward to work with some of these low-level details. I wrote that post early pandemic and spent a good part of the next few months working on the [geos package](https://github.com/paleolimbot/geos/), which interacts with GEOS (which also powers much of sf) at a lower level and exposes some really nice functions for doing nuts-and-bolts geometry work. I'm in the process of preparing the [libgeos 3.9.1-1](https://github.com/paleolimbot/libgeos/issues/7) and [geos 0.1.0](https://github.com/paleolimbot/geos/issues/38) release, and thought I'd revisit the idea of stream network analysis to see if I can make the analysis a little less awkward.
 
 I'll start with the same example data I used in the last post, loaded with the trusty [sf package](https://r-spatial.github.io/sf).
 
@@ -41,8 +35,7 @@ I'll start with the same example data I used in the last post, loaded with the t
 
 </div>
 
-A pure geos approach
---------------------
+## A pure geos approach
 
 Because I'm testing the geos package, I'm going to convert the objects to [`geos_geometry()`](https://rdrr.io/pkg/geos/man/as_geos_geometry.html) right away (all `geos_*()` functions call [`as_geos_geometry()`](https://rdrr.io/pkg/geos/man/as_geos_geometry.html) internally, too, if you ever want to save a step in a one-off calculation). If you inspect the rivers geometry you'll notice that the rivers geometry is a `MULTILINESTRING`. For what we're about to do we need to use the fact that the start point of one river segment is the end point of another, and so we need to break the linestrings out of their containers. In sf you'd do [`st_cast(, "LINESTRING")`](https://rdrr.io/pkg/sf/man/st_cast.html). In geos you can use [`geos_unnest()`](https://rdrr.io/pkg/geos/man/geos_unnest.html), which has nothing to do with the sf spec but provides some options for dealing with (potentially nested) collections.
 
@@ -184,7 +177,7 @@ Cool! With that under our belt, let's see if the approach scales to the whole ne
 
 </div>
 
-Like above, we'll compute the start and end points and the [`geos_geometry()`](https://rdrr.io/pkg/geos/man/as_geos_geometry.html) version of the lakes and rivers. Also we'll compute the indexes because we're going to compute some predicates values in a loop. Of this, [`geos_unnest()`](https://rdrr.io/pkg/geos/man/geos_unnest.html) is the only noticeable slowdown (as we'll see below, using [`st_cast("LINESTRING")`](https://rdrr.io/pkg/sf/man/st_cast.html) is much faster).
+Like above, we'll compute the start and end points and the [`geos_geometry()`](https://rdrr.io/pkg/geos/man/as_geos_geometry.html) version of the lakes and rivers. Also we'll compute the indexes because we're going to compute some predicate values in a loop. Of this, [`geos_unnest()`](https://rdrr.io/pkg/geos/man/geos_unnest.html) is the only noticeable slowdown (as we'll see below, using [`st_cast("LINESTRING")`](https://rdrr.io/pkg/sf/man/st_cast.html) is much faster).
 
 <div class="highlight">
 
@@ -204,7 +197,7 @@ Like above, we'll compute the start and end points and the [`geos_geometry()`](h
 
 </div>
 
-I mentioned above that we need a slightly different approach to compute the inlets and outlets when the lakes and rivers layer aren't quite aligned (normally there is a segment start/end at the edge of the lake). The differernce in our case is about 0.5 m, which I suspect has to do with the NAD83/WGS84 projection difference with updated PROJ. In any case, the approach we used for East Lake doesn't scale to the whole data set. What we really need is [`st_is_within_distance()`](https://rdrr.io/pkg/sf/man/geos_binary_pred.html) or `s2_dwithin_matrix()` (which will probably be included in the upcoming or a future geos release). An important consideration is that buffering the lake is not an option: the biggest lake in the province takes 8 seconds to buffer (compared to 1 second to compute the entire upstream network!). My approach here is to find the places where the stream network intersects the boundary and then find the nearest segment end point to that. This fails where two streams enter a lake at the same point (which happens in this data set); I'll demo the combined sf-geos approach below that makes this more robust.
+I mentioned above that we need a slightly different approach to compute the inlets and outlets when the lakes and rivers layer aren't quite aligned (normally there is a segment start/end at the edge of the lake). The differernce in our case is about 0.5 m, which I suspect has to do with the NAD83/WGS84 projection difference with updated PROJ. In any case, the approach we used for East Lake doesn't scale to the whole data set. What we really need is [`st_is_within_distance()`](https://rdrr.io/pkg/sf/man/geos_binary_pred.html) or `s2_dwithin_matrix()` (which will probably be included in the upcoming or a future geos release). An important consideration is that buffering the lake is not an option: the biggest lake in the province takes 8 seconds to buffer (compared to 0.1 seconds to compute the entire upstream network!). My approach here is to find the places where the stream network intersects the boundary and then find the nearest segment end point to that. This fails where two streams enter a lake at the same point (which happens in this data set); I'll demo the combined sf-geos approach below that makes this more robust.
 
 <div class="highlight">
 
@@ -278,12 +271,11 @@ In the earlier post I noted that the largest network in the province could be ca
 
 <pre class='chroma'><code class='language-r' data-lang='r'><span class='nf'><a href='https://rdrr.io/r/base/system.time.html'>system.time</a></span>(<span class='nf'><a href='https://rdrr.io/r/base/lapply.html'>lapply</a></span>(<span class='k'>lakes_ns</span>, <span class='k'>lake_upstream_segments</span>))
 <span class='c'>#&gt;    user  system elapsed </span>
-<span class='c'>#&gt;   3.135   0.056   3.202</span></code></pre>
+<span class='c'>#&gt;   2.660   0.048   2.719</span></code></pre>
 
 </div>
 
-A pure sf approach
-------------------
+## A pure sf approach
 
 The insane speed difference I just quoted has little to do with sf or geos and more to do with the fact that I didn't really know what I was doing when I wrote the last post. Knowing what I do now, let's see how fast I can make sf do the same thing. We've already read the data into sf form, but we need to break the stream segments out of their multi-geometry container. As I noted above, [`st_cast()`](https://rdrr.io/pkg/sf/man/st_cast.html) is usually much faster than [`geos_unnest()`](https://rdrr.io/pkg/geos/man/geos_unnest.html) (5 seconds vs. 20 seconds).
 
@@ -320,7 +312,7 @@ Creating the segment lookup table is similar in speed and syntax to [`geos_equal
 
 </div>
 
-I talked a big game earlier about how using [`st_is_within_distance()`](https://rdrr.io/pkg/sf/man/geos_binary_pred.html) would be nice for the purposes of solving the slight difference between the lake and river layers. It turns out that's pretty slow (for the big lake, Lake Rossignol, it took about 30 seconds) and so I didn't do it here as it would wreck the comparison. The only difference here is that I pre-compute the binary predicates because there is no index that we can query on repeat and rebuilding it for each lake takes about 5 seconds (for comparison, computing the network for Lake Major less than half a second).
+I talked a big game earlier about how using [`st_is_within_distance()`](https://rdrr.io/pkg/sf/man/geos_binary_pred.html) would be nice for the purposes of solving the slight difference between the lake and river layers. It turns out that's pretty slow (for the big lake, Lake Rossignol, it took about 30 seconds) and so I didn't do it here as it would wreck the comparison. The only difference here is that I pre-compute the binary predicates because there is no index that we can query on repeat and rebuilding it for each lake takes about 5 seconds (for comparison, computing the network for Lake Major takes less than half a second).
 
 <div class="highlight">
 
@@ -392,8 +384,7 @@ On the big network we looked at earlier it generates the same network and takes 
 
 I imagine there's some variability in the final timing, but I can get through all the lakes in about 6 minutes locally. Far better than my quote of an hour!
 
-How I'd actually do it
-----------------------
+## How I'd actually do it
 
 In both approaches I was being a purist to see if there was any point to using geos for something like this. It's the use case I imagined when I wrote it: where you want to do a lot of nuts-and-bolts calculations in a loop. If I were doing this in real life today I'd use a mix of sf, s2, and geos, since they're all really good at various parts of the calculation. As of this writing `s2_dwithin()` is a still too slow to be useful here and I haven't quite found the solution I'd like for the inlet/outlet thing (probably I'd use something like [`geos_set_precision()`](https://rdrr.io/pkg/geos/man/geos_centroid.html) to put all vertices on a common grid).
 

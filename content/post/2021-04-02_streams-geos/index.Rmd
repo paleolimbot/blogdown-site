@@ -17,14 +17,14 @@ projects: []
 output: hugodown::md_document
 ---
 
-```{r setup, echo = FALSE}
+```{r setup, include = FALSE}
 library(sf)
 library(geos)
 ```
 
 Almost exactly a year ago I wrote a [post on using R and sf to work with stream networks](/post/2020/stream-networks-using-r-and-sf/). The post was about low-level analysis with the [Nova Scotia stream network](https://nsgi.novascotia.ca/gdd/) to find upstream networks of various lakes so that I could approximate the catchments without a province-wide DEM analysis.
 
-If you read the post, you'll realize that it's not just you, it's a tiny bit awkward to work with some of these low-level details. I wrote that post early pandemic and spent a good part of the next few months working on the [geos package](https://github.com/paleolimbot/geos/), which interacts with GEOS (which also powers much of sf) at a lower level and exposes some really nice functions for doint nuts-and-bolts geometry work. I'm in the process of preparing the [libgeos 3.9.1-1](https://github.com/paleolimbot/libgeos/issues/7) and [geos 0.1.0](https://github.com/paleolimbot/geos/issues/38) release, and thought I'd revisit the idea of stream network analysis to see if I can make the analysis a little less awkward.
+If you read the post, you'll realize that it's not just you, it's a tiny bit awkward to work with some of these low-level details. I wrote that post early pandemic and spent a good part of the next few months working on the [geos package](https://github.com/paleolimbot/geos/), which interacts with GEOS (which also powers much of sf) at a lower level and exposes some really nice functions for doing nuts-and-bolts geometry work. I'm in the process of preparing the [libgeos 3.9.1-1](https://github.com/paleolimbot/libgeos/issues/7) and [geos 0.1.0](https://github.com/paleolimbot/geos/issues/38) release, and thought I'd revisit the idea of stream network analysis to see if I can make the analysis a little less awkward.
 
 I'll start with the same example data I used in the last post, loaded with the trusty [sf package](https://r-spatial.github.io/sf).
 
@@ -148,7 +148,7 @@ lakes_ns_sf <- read_sf("~/Dropbox/delineatens/dem/lakes.shp") %>%
   st_transform(st_crs(rivers_ns_sf))
 ```
 
-Like above, we'll compute the start and end points and the `geos_geometry()` version of the lakes and rivers. Also we'll compute the indexes because we're going to compute some predicates values in a loop. Of this, `geos_unnest()` is the only noticeable slowdown (as we'll see below, using `st_cast("LINESTRING")` is much faster).
+Like above, we'll compute the start and end points and the `geos_geometry()` version of the lakes and rivers. Also we'll compute the indexes because we're going to compute some predicate values in a loop. Of this, `geos_unnest()` is the only noticeable slowdown (as we'll see below, using `st_cast("LINESTRING")` is much faster).
 
 ```{r}
 lakes_ns <- as_geos_geometry(lakes_ns_sf)
@@ -166,7 +166,7 @@ river_end_index_ns <- geos_strtree(river_end_ns)
 upstream_lookup_ns <- geos_equals_matrix(river_start_ns, river_end_index_ns)
 ```
 
-I mentioned above that we need a slightly different approach to compute the inlets and outlets when the lakes and rivers layer aren't quite aligned (normally there is a segment start/end at the edge of the lake). The differernce in our case is about 0.5 m, which I suspect has to do with the NAD83/WGS84 projection difference with updated PROJ. In any case, the approach we used for East Lake doesn't scale to the whole data set. What we really need is `st_is_within_distance()` or `s2_dwithin_matrix()` (which will probably be included in the upcoming or a future geos release). An important consideration is that buffering the lake is not an option: the biggest lake in the province takes 8 seconds to buffer (compared to 1 second to compute the entire upstream network!). My approach here is to find the places where the stream network intersects the boundary and then find the nearest segment end point to that. This fails where two streams enter a lake at the same point (which happens in this data set); I'll demo the combined sf-geos approach below that makes this more robust.
+I mentioned above that we need a slightly different approach to compute the inlets and outlets when the lakes and rivers layer aren't quite aligned (normally there is a segment start/end at the edge of the lake). The differernce in our case is about 0.5 m, which I suspect has to do with the NAD83/WGS84 projection difference with updated PROJ. In any case, the approach we used for East Lake doesn't scale to the whole data set. What we really need is `st_is_within_distance()` or `s2_dwithin_matrix()` (which will probably be included in the upcoming or a future geos release). An important consideration is that buffering the lake is not an option: the biggest lake in the province takes 8 seconds to buffer (compared to 0.1 seconds to compute the entire upstream network!). My approach here is to find the places where the stream network intersects the boundary and then find the nearest segment end point to that. This fails where two streams enter a lake at the same point (which happens in this data set); I'll demo the combined sf-geos approach below that makes this more robust.
 
 ```{r}
 lake <- lakes_ns[399]
@@ -258,7 +258,7 @@ Creating the segment lookup table is similar in speed and syntax to `geos_equals
 upstream_lookup_sf <- st_equals(rivers_ns_sf_start, rivers_ns_sf_end)
 ```
 
-I talked a big game earlier about how using `st_is_within_distance()` would be nice for the purposes of solving the slight difference between the lake and river layers. It turns out that's pretty slow (for the big lake, Lake Rossignol, it took about 30 seconds) and so I didn't do it here as it would wreck the comparison. The only difference here is that I pre-compute the binary predicates because there is no index that we can query on repeat and rebuilding it for each lake takes about 5 seconds (for comparison, computing the network for Lake Major less than half a second).
+I talked a big game earlier about how using `st_is_within_distance()` would be nice for the purposes of solving the slight difference between the lake and river layers. It turns out that's pretty slow (for the big lake, Lake Rossignol, it took about 30 seconds) and so I didn't do it here as it would wreck the comparison. The only difference here is that I pre-compute the binary predicates because there is no index that we can query on repeat and rebuilding it for each lake takes about 5 seconds (for comparison, computing the network for Lake Major takes less than half a second).
 
 ```{r}
 lake_boundary_sf <- st_boundary(lakes_ns_sf$geometry)
