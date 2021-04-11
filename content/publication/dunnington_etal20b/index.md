@@ -3,7 +3,7 @@ abstract: "Using an organic carbon removal data set (n = 500), we compared a phy
 authors: ["Dewey W. Dunnington", "Benjamin F. Trueman", "William J. Raseman", "Lindsay E. Anderson", "Graham A. Gagnon"]
 date: "2020-11-11"
 doi: "10.1021/acsestengg.0c00053"
-featured: false
+featured: true
 image:
   caption: ""
   focal_point: ""
