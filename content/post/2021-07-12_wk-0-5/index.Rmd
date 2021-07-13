@@ -1,0 +1,192 @@
+---
+title: "wk version 0.5.0!"
+subtitle: ""
+summary: ""
+authors: []
+tags: []
+categories: []
+date: 2021-07-12T20:37:02-04:00
+lastmod: 2021-07-12T20:37:02-04:00
+featured: false
+draft: false
+image:
+  caption: ""
+  focal_point: ""
+  preview_only: false
+projects: []
+output: hugodown::md_document
+---
+
+```{r setup, include = FALSE}
+library(sf)
+library(wk)
+library(cpp11)
+library(dplyr)
+```
+
+A new version of wk is fresh on CRAN! Version 0.5 introduces some new features to the framework, incorporates most of the functionality that was previously in the [wkutils](https://github.com/paleolimbot/wkutils) package, and fixes a number of bugs that popped up in the development of [s2](https://github.com/r-spatial/s2) and [geos](https://github.com/paleolimbot/geos). To showcase some of the new features I'll use the [Vermont counties data set from the VT Open Geodata Portal](https://geodata.vermont.gov/datasets/2f289dbae90347c58cd1765db84bd09e_29/explore).
+
+```{r}
+library(wk)
+library(sf)
+vt <- read_sf("VT_Data_-_County_Boundaries.geojson")["CNTYNAME"]
+vt
+```
+
+### Breaking down features and building them back up again
+
+The biggest feature in the new release is the ability to break down features to simpler components (at the simplest, a bunch of coordinates) and build them back up again into geometry that you can pass elsewhere. Some of this functionality previously lived in [wkutils](https://github.com/paleolimbot/wkutils) but it turns out this is really important: pretty much all geometry in base R is done with big long `x` and `y` vectors (e.g., `xy.coords()`). To make geometry that was previously locked away in WKB, WKT, or sf objects accessible, there needed to be a way out.
+
+The first level of a geometry you might want to break down are collections: MULTIPOLYGON, MULTILINESTRING, MULTIPOINT, and GEOMETRYCOLLECTION. These types are useful when you have multiple things that represent one element in a vector, like multiple bits of land representing a county. In our case the features were saved as MULTIPOLYGON but there aren't actually any features with more than one. To simplify it, we can use `wk_flatten()`:
+
+```{r}
+(vt_poly <- wk_flatten(vt))
+```
+
+By default `wk_flatten()` peels off one layer of collections, repeating rows where a feature has more than one element. This is a little like `sf::st_cast()` but is defined in terms of what you have rather than what you want. For advanced users, the flattening functionality is also implemented as a [wk "filter"](https://paleolimbot.github.io/wk/dev/articles/articles/programming.html#filters), which means it can do most of what it does without allocating any extra memory and can stream input and output very efficiently.
+
+I'm demonstrating all of this with sf because it's the most common use-case, but it works with any data frame/tibble with exactly one column implementing the `wk_handle()` generic (including an `st_sfc()`!). In fact, pretty much anything you do with wk also "just works" with data frames.
+
+```{r}
+vt_tbl <- tibble::tibble(vt$CNTYNAME, geom = as_wkb(vt))
+wk_flatten(vt_tbl)
+```
+
+The next level is vertices: one point feature for each vertex in the input.
+
+```{r}
+(vt_vertices <- wk_vertices(vt))
+```
+
+Vertices are useful if you need to input something that requires points but you were handed a boundary or polygon layer (I use this kind of thing to set depth values at 0 along coastlines when calculating bathymetry, for example). This is good for GIS function stuff, but if you're doing any custom geometry processing or just need coordinates for ggplot2 or some base R function, you'll need straight up `x` and `y` vectors. If so, the new `wk_coords()` function is just for you!
+
+```{r}
+(vt_coords <- tibble::as_tibble(wk_coords(vt)))
+```
+
+And, of course, sometimes you get handed a bunch of coordinates but you really want an sf object. For this case there is `wk_linestring()`, `wk_polygon()`, and `wk_collection()`. For example, to reconstruct the original sf object starting with coordinates we could do:
+
+```{r}
+vt_poly_reconstructed <- wk_polygon(
+  xy(vt_coords$x, vt_coords$y, crs = "WGS84"),
+  feature_id = vt_coords$feature_id,
+  ring_id = vt_coords$ring_id
+)
+
+vt_multipoly_reconstructed <- wk_collection(
+  vt_poly_reconstructed,
+  geometry_type = wk_geometry_type("multipolygon"),
+  feature_id = seq_along(vt_poly_reconstructed)
+)
+
+st_as_sfc(vt_multipoly_reconstructed)
+```
+
+### dplyr integration
+
+There's nothing new about dplyr's ability to work with vectors in wk 0.5, but the new functions are well-suited to dplyr's `group_by()` and `summarise()` as well as the newish auto-unpacking feature in `mutate()` and `summarise()`. For example, to keep all the attributes when calling `wk_coords()` you can do:
+
+```{r}
+library(dplyr)
+
+vt %>% 
+  as_tibble() %>% 
+  group_by(CNTYNAME) %>% 
+  summarise(wk_coords(geometry))
+```
+
+To build back up a geometry you can also use `group_by()` and `summarise()` in their more traditional roles (returning one row per group). This is a tiny bit slower but *so* much easier to read.
+
+```{r}
+vt_coords %>% 
+  group_by(feature_id) %>% 
+  summarise(geom = wk_polygon(xy(x, y, crs = "WGS84")))
+```
+
+The new coordinate functions make dplyr more accessible for doing raw coordinate processing if you're into that kind of thing. If you'll recall the [short formula](https://en.wikipedia.org/wiki/Shoelace_formula) for the signed area of a polygon, you can check the winding direction of your polygons without leaving dplyr (the polygons here are wound correctly, hence the positive areas).
+
+```{r}
+vt %>% 
+  as_tibble() %>% 
+  group_by(CNTYNAME) %>% 
+  summarise(wk_coords(geometry), .groups = "keep") %>% 
+  summarise(
+    signed_area = 0.5 * sum(
+      (lag(x, 1) - first(x)) * (y - lag(y, 2)),
+      na.rm = TRUE
+    )
+  )
+```
+
+### First-class coordinate transforms
+
+Some of the coolest new stuff in GIS is actually in JavaScript, like the [really awesome tools for animated projections](https://bost.ocks.org/mike/example/) in D3. The tools in D3 work on arbitrary coordinate transforms (read: PROJ), but the tools that work on the transforms don't have to know anything about datums or projections...they just care about a coordinate moving from one place to the next. This kind of thing is really common in GIS and visualization and deserved first-class support in wk. For those paying close attention to s2 development, I also need it to make geometry represented in Cartesian space valid on the sphere given an arbitrary projection (currently only [implemented](https://r-spatial.github.io/s2/reference/s2_unprojection_filter.html) for plate carree).
+
+Starting small, though, wk just provides the framework so that other packages can do cool stuff that I don't need to maintain (maybe). I did put in enough transforms to make sure every thing was tested, which includes an affine transform and transforms that set/drop coordinate values (most usefully, Z and M).
+
+```{r}
+wk_transform(vt, wk_affine_rescale(vt, rct(0, 0, 1, 1)))
+wk_set_z(vt, 0)
+```
+
+The point of this all, though, is that extension packages can make their own transforms. There's no C++ wrapper for this yet but the C is relatively minimal.
+
+```{cpp11}
+#include "cpp11.hpp"
+using namespace cpp11;
+#include "wk-v1.h"
+#include "wk-v1-impl.c"
+
+typedef struct {
+  double dx;
+  double dy;
+} bump_trans_t;
+
+int bump_trans_trans(R_xlen_t feature_id, const double* xyzm_in, double* xyzm_out, void* trans_data) {
+  bump_trans_t* data = (bump_trans_t*) trans_data;
+  xyzm_out[0] = xyzm_in[0] + data->dx;
+  xyzm_out[1] = xyzm_in[1] + data->dy;
+  return WK_CONTINUE;
+}
+
+void bump_trans_finalizer(void* trans_data) {
+  delete (bump_trans_t*) trans_data;
+}
+
+[[cpp11::linking_to(wk)]]
+[[cpp11::register]]
+sexp bump_trans_new(double dx, double dy) {
+  wk_trans_t* trans = wk_trans_create();
+  trans->trans = &bump_trans_trans;
+  trans->finalizer = &bump_trans_finalizer;
+  trans->trans_data = new bump_trans_t {dx, dy};
+  return wk_trans_create_xptr(trans, R_NilValue, R_NilValue);
+}
+```
+
+You do need a tiny bit of R infrastructure to make this work smoothly:
+
+```{r}
+bump_trans <- function(dx = 0, dy = 0) {
+  new_wk_trans(bump_trans_new(dx, dy), "bump_trans")
+}
+```
+
+Then your transform is accessible for anything that needs it! Most algorithms will probably also need an implementation of `wk_trans_inverse()` to return the inverse operation.
+
+```{r}
+wk_transform(wkt("POINT (0 0)"), bump_trans(12, 13))
+```
+
+### Plotting
+
+As a side effect of some of this, plotting now "just works" without the wkutils package for the built-in vector types. It isn't particularly fast or glamourous, but it's good enough for a basic "get this geometry on my screen". Previously this was done using a confusing circular dependency on wkutils. It's used for `plot()` for `wkb()` and `wkt()`, but also works for arbitrary data types with a `wk_handle()` method via `wk_plot()`.
+
+```{r}
+wk_plot(vt)
+wk_plot(vt_vertices, add = T)
+```
+
+### What's next?
+
+So far wk development has focused on getting all the nuts and bolts in place so that extensions can do really awesome stuff with few dependencies. Now is that time! I'm hoping to get transforms working for PROJ so that s2 can do a better job creating valid spherical geometry from projected coordinates. Finally, I'm hoping to get some file readers working so that the lazy nature of the handler/filter system can really shine.
